@@ -1,0 +1,4 @@
+winget.packages.json
+winget.*.checkpoint*
+winget.*.cache
+winget.*.ignore
