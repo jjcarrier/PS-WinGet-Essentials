@@ -1,5 +1,7 @@
 # WinGet-Essentials PowerShell Module
 
+![PSGallery](https://img.shields.io/powershellgallery/p/WinGet-Essentials)
+
 ## Description
 
 Provides functionality for improved software management. This module includes
