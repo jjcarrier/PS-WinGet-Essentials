@@ -1,6 +1,6 @@
 @{
     RootModule = 'WinGet-Essentials.psm1'
-    ModuleVersion = '0.9'
+    ModuleVersion = '0.9.2'
     GUID = '2a2b6c24-d6cc-4d59-a456-e7ccd90afd03'
     Author = 'Jon Carrier'
     CompanyName = 'Unknown'
@@ -15,18 +15,25 @@
     # FormatsToProcess = @()
     # NestedModules = @()
 
-    FunctionsToExport = @()
-    CmdletsToExport = @('Update-WinGetSoftware', 'Checkpoint-WinGetSoftware', 'Restore-WinGetSoftware')
+    FunctionsToExport = @('Update-WinGetSoftware', 'Checkpoint-WinGetSoftware', 'Restore-WinGetSoftware')
+    CmdletsToExport = @()
     VariablesToExport = '*'
     AliasesToExport = @('winup', 'winget-update, winget-checkpoint, winget-restore')
 
     # ModuleList = @()
-    # FileList = @()
+    FileList = @(
+        'WinGet-Essentials.psd1',
+        'WinGet-Essentials.psm1',
+        'modules\WinGet-Checkpoint.psm1',
+        'modules\WinGet-Merge.psm1',
+        'modules\WinGet-Restore.psm1',
+        'modules\WinGet-Update.psm1'
+    )
 
     PrivateData = @{
 
         PSData = @{
-            Tags = @('WinGet', 'Console', 'Terminal', 'UI')
+            Tags = @('Windows', 'WinGet', 'Console', 'Terminal', 'UI')
             LicenseUri = 'https://github.com/jjcarrier/PS-WinGet-Essentials/blob/main/LICENSE'
             ProjectUri = 'https://github.com/jjcarrier/PS-WinGet-Essentials'
             # IconUri = ''

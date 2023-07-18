@@ -6,4 +6,3 @@ Set-Alias winup                 Update-WingetSoftware
 Set-Alias winget-update         Update-WingetSoftware
 Set-Alias winget-restore        Restore-WingetSoftware
 Set-Alias winget-checkpoint     Checkpoint-WingetSoftware
-
