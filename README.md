@@ -20,7 +20,8 @@ the following functionality:
   * Saves a list of installed software with version info.
   * This will mostly an alias for `winget export --include-versions`.
 
-> NOTE: A future addition to this module will provide a way for `winget-restore`
+> **Note**
+> A future addition to this module will provide a way for `winget-restore`
   to deploy software from a checkpoint to the host machine. This will leverage
   the user-provided tags as a way to filter what software to restore and a
   way to use the specified versions or use-latest available versions.
@@ -86,11 +87,12 @@ This path may for instance be:
 
 Each line should contain a single winget package ID (verbatim).
 
-> __IMPORTANT NOTE:__ It is recommended that the user creates a SymLink for this file
-  instead of having the file reside directly in this path. This is to avoid
-  accidental deletion during `Uninstall-Module`. It also provides more flexibility
-  for linking the same file to multiple versions of the module (assuming there
-  are no compatibility issues between the versions).
+> **Warning**
+> It is recommended that the user creates a SymLink for this file instead of
+  having the file reside directly in this path. This is to avoid accidental
+  deletion during `Uninstall-Module`. It also provides more flexibility for
+  linking the same file to multiple versions of the module (assuming there are
+  no compatibility issues between the versions).
 
 ## Checkpoint-WingetSoftware
 
@@ -103,10 +105,11 @@ resides in. This path may for instance be:
 
 `$env:USERPROFILE\Documents\PowerShell\Modules\WinGet-Essentials\<MODULE_VERSION>\modules`
 
-> __IMPORTANT NOTE:__ `Uninstall-Module` will indiscriminately remove files in
-  the associated module's directory. Consider moving these files to another
-  location. A future version of this module will likely provide a user-configurable
-  way to redirect this file to other locations.
+> **Warning**
+> `Uninstall-Module` will indiscriminately remove files in the associated
+  module's directory. Consider moving these files to another location. A future
+  version of this module will likely provide a user-configurable way to redirect
+  this file to other locations.
 
 ### Usage
 
@@ -132,10 +135,11 @@ This path may for instance be:
 
 `$env:USERPROFILE\Documents\PowerShell\Modules\WinGet-Essentials\<MODULE_VERSION>\modules`
 
-> __IMPORTANT NOTE:__ It is recommended that the user creates a SymLink for this file
-  instead of having the file reside directly in this path. This is to avoid
-  accidental deletion during `Uninstall-Module`. It also provides more flexibility
-  for linking the same file to multiple versions of the module (assuming there
+> **Warning**
+> It is recommended that the user creates a SymLink for this file instead of
+  having the file reside directly in this path. This is to avoid accidental
+  deletion during `Uninstall-Module`. It also provides more flexibility for
+  linking the same file to multiple versions of the module (assuming there
   are no compatibility issues between the versions).
 
 This JSON file is to contain an array of objects describing each package of
