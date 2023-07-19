@@ -166,6 +166,15 @@ function Resolve-WinGetSoftwareUpgrade
 <#
 .DESCRIPTION
     Provides an interactive WinGet UI for selectively installing updates.
+
+.EXAMPLE
+    PS> Update-WingetSoftware
+
+.EXAMPLE
+    PS> Update-WingetSoftware <WinGetPackageID>[,<AnotherWinGetPackageID>]
+
+.EXAMPLE
+    PS> Update-WingetSoftware -Sync
 #>
 function Update-WinGetSoftware
 {

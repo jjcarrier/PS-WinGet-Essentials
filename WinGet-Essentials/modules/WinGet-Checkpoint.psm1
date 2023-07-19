@@ -5,6 +5,9 @@
     Creates/updates a manifest file (winget.{HOSTNAME}.checkpoint) that
     contains a list of all software installed on this system that is available
     on WinGet through at least one source.
+
+.EXAMPLE
+    PS> Checkpoint-WingetSoftware
 #>
 function Checkpoint-WingetSoftware
 {

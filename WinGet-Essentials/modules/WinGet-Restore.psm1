@@ -2,7 +2,14 @@
 $PackageDatabase = "$PSScriptRoot\winget.packages.json"
 
 <#
+.DESCRIPTION
     Restore a collection of packages based on the provided list of tags.
+
+.EXAMPLE
+    PS> Restore-WinGetSoftware -All -UseUI
+
+.EXAMPLE
+    PS> Restore-WinGetSoftware -Tags Dev,Essential
 #>
 function Restore-WinGetSoftware
 {
