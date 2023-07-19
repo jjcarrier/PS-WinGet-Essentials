@@ -1,6 +1,6 @@
 @{
     RootModule = 'WinGet-Essentials.psm1'
-    ModuleVersion = '0.9.5'
+    ModuleVersion = '0.9.6'
     GUID = '2a2b6c24-d6cc-4d59-a456-e7ccd90afd03'
     Author = 'Jon Carrier'
     CompanyName = 'Unknown'
@@ -28,7 +28,6 @@
         'WinGet-Essentials.psd1',
         'WinGet-Essentials.psm1',
         'modules\WinGet-Checkpoint.psm1',
-        'modules\WinGet-Merge.psm1',
         'modules\WinGet-Restore.psm1',
         'modules\WinGet-Update.psm1'
     )
