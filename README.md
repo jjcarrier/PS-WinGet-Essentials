@@ -43,20 +43,15 @@ Import-Module WinGet-Essentials
 
 The current set of cmdlets provided by this module are:
 
-* Update-WingetSoftware
-* Checkpoint-WingetSoftware
-* Restore-WingetSoftware
+* Update-WingetSoftware (aliases: winget-update, winup)
+* Checkpoint-WingetSoftware (aliases: winget-checkpoint)
+* Restore-WingetSoftware (aliases: winget-restore)
 
-### Update-WingetSoftware
+## Update-WingetSoftware
 
 Provides a basic UI for updating software available in a WinGet repository.
 
-#### Exported Aliases
-
-* winget-update
-* winup
-
-#### Usage
+### Usage
 
 To selectively install updates using a simple UI run:
 
@@ -64,11 +59,16 @@ To selectively install updates using a simple UI run:
 Update-WingetSoftware
 ```
 
+![CLI Tab Completion](img/winget-update-ui.png)
+
+
 To install a specific package run (supports tab-completion for cached updatable package IDs):
 
 ```pwsh
 Update-WingetSoftware <WinGetPackageID>[,<AnotherWinGetPackageID>]
 ```
+
+![CLI Tab Completion](img/winget-update-cli.png)
 
 To update the cached list of upgradable package IDs, run:
 
@@ -76,27 +76,45 @@ To update the cached list of upgradable package IDs, run:
 Update-WingetSoftware -Sync
 ```
 
+### Ignore package IDs
+
 To ignore specific packages from appearing in this interface, create a
 `winget.{HOSTNAME}.ignore` file in the same directory as the `winget-update.psm1`.
+This path may for instance be:
+
+`$env:USERPROFILE\Documents\PowerShell\Modules\WinGet-Essentials\<MODULE_VERSION>\modules`
+
 Each line should contain a single winget package ID (verbatim).
 
-### Checkpoint-WingetSoftware
+> __IMPORTANT NOTE:__ It is recommended that the user creates a SymLink for this file
+  instead of having the file reside directly in this path. This is to avoid
+  accidental deletion during `Uninstall-Module`. It also provides more flexibility
+  for linking the same file to multiple versions of the module (assuming there
+  are no compatibility issues between the versions).
+
+## Checkpoint-WingetSoftware
 
 Stores a snapshot of installed software, including versions. This can be used
 by WinGet natively to reinstall the listed software, or (__in a future release__)
 restore sets of software based on tags using `Restore-WingetSoftware`.
 
-#### Exported Aliases
+The checkpoint file and its backup are stored in the same path that this module
+resides in. This path may for instance be:
 
-* winget-checkpoint
+`$env:USERPROFILE\Documents\PowerShell\Modules\WinGet-Essentials\<MODULE_VERSION>\modules`
 
-#### Usage
+> __IMPORTANT NOTE:__ `Uninstall-Module` will indiscriminately remove files in
+  the associated module's directory. Consider moving these files to another
+  location. A future version of this module will likely provide a user-configurable
+  way to redirect this file to other locations.
+
+### Usage
 
 ```pwsh
 Checkpoint-WingetSoftware
 ```
 
-### Restore-WingetSoftware
+## Restore-WingetSoftware
 
 Restores a set of software packages based on a locally, user-managed,
 `winget.packages.json` (to be placed in the same directory as this module).
@@ -106,16 +124,19 @@ by the `-MatchAny` switch parameter (default behavior is to `Match All` tags).
 This cmdlet support tab completions for the user-defined tags found in the
 `winget.packages.json` file.
 
-#### Exported Aliases
-
-* winget-restore
-
-#### Setup of winget.packages.json
+### Setup of winget.packages.json
 
 Before using this cmdlet, a `winget.packages.json` file needs to be manually
-setup. This file is to be placed in the same directory as this module. This may
-for instance be found in:
+setup. This file is to be placed in the same directory as this module.
+This path may for instance be:
+
 `$env:USERPROFILE\Documents\PowerShell\Modules\WinGet-Essentials\<MODULE_VERSION>\modules`
+
+> __IMPORTANT NOTE:__ It is recommended that the user creates a SymLink for this file
+  instead of having the file reside directly in this path. This is to avoid
+  accidental deletion during `Uninstall-Module`. It also provides more flexibility
+  for linking the same file to multiple versions of the module (assuming there
+  are no compatibility issues between the versions).
 
 This JSON file is to contain an array of objects describing each package of
 interest. It should have the following form:
@@ -139,7 +160,7 @@ interest. It should have the following form:
 ]
 ```
 
-#### Usage
+### Usage
 
 Example: All packages containing the both the tags: "Dev" and "Essential" will
 be presented in a UI for user refinement of packages to install.
@@ -148,6 +169,8 @@ be presented in a UI for user refinement of packages to install.
 Restore-WingetSoftware -Tags Dev,Essential -UseUI
 ```
 
+![CLI Tab Completion](img/winget-restore-ui.png)
+
 Example: Install all packages tagged with any of the following: "Essential",
 "Desktop" but not containing "Dev".
 
@@ -155,16 +178,18 @@ Example: Install all packages tagged with any of the following: "Essential",
 Restore-WingetSoftware -Tags Essential,Desktop -MatchAny -ExcludeTags Dev
 ```
 
+![CLI Tab Completion](img/winget-restore-cli.png)
+
 ## Additional Notes
 
-One feature that might be missing from something containing the word `Essentials`
-is a tab-completion interface, this is currently left out of this module, but
-may be included in the future as an optional function to invoke, in any case
-this is a trivial feature to add and is well-documented by Microsoft here:
+One feature that might be missing from a tool containing the word `Essentials`
+is a tab-completion interface for winget itself. This is currently left out of
+this module, but may be included in the future as an optional function to invoke,
+in any case this is a trivial feature to add and is well-documented by Microsoft here:
 
 [Microsoft Learn: WinGet Tab Completion](https://learn.microsoft.com/en-us/windows/package-manager/winget/tab-completion)
 
-Other code repositories provide suites of tab-completion support (including the above)
-for various commands such as:
+Other code repositories provide suites of tab-completion support for various
+commands such as:
 
 [PSTabCompletions Git Repository](https://github.com/jjcarrier/PSTabCompletions)
