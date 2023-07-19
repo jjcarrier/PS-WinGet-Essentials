@@ -59,7 +59,7 @@ To selectively install updates using a simple UI run:
 Update-WingetSoftware
 ```
 
-![CLI Tab Completion](img/winget-update-ui.png)
+![Update UI](img/winget-update-ui.png)
 
 
 To install a specific package run (supports tab-completion for cached updatable package IDs):
@@ -68,7 +68,7 @@ To install a specific package run (supports tab-completion for cached updatable 
 Update-WingetSoftware <WinGetPackageID>[,<AnotherWinGetPackageID>]
 ```
 
-![CLI Tab Completion](img/winget-update-cli.png)
+![Update Tab Completion](img/winget-update-cli.png)
 
 To update the cached list of upgradable package IDs, run:
 
@@ -169,7 +169,7 @@ be presented in a UI for user refinement of packages to install.
 Restore-WingetSoftware -Tags Dev,Essential -UseUI
 ```
 
-![CLI Tab Completion](img/winget-restore-ui.png)
+![Restore UI](img/winget-restore-ui.png)
 
 Example: Install all packages tagged with any of the following: "Essential",
 "Desktop" but not containing "Dev".
@@ -178,7 +178,7 @@ Example: Install all packages tagged with any of the following: "Essential",
 Restore-WingetSoftware -Tags Essential,Desktop -MatchAny -ExcludeTags Dev
 ```
 
-![CLI Tab Completion](img/winget-restore-cli.png)
+![Restore Tab Completion](img/winget-restore-cli.png)
 
 ## Additional Notes
 
