@@ -503,8 +503,10 @@ function Update-WinGetSoftware
 $UpgradesScriptBlock = {
     param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
 
-    if (Test-Path $CacheFile) {
-        $upgrades = (Get-Content $CacheFile | ConvertFrom-Json).upgrades
+    $cacheFile = $CacheFilePath.Replace('{HOSTNAME}', $(hostname).ToLower())
+
+    if (Test-Path $cacheFile) {
+        $upgrades = (Get-Content $cacheFile | ConvertFrom-Json).upgrades
         if ($null -ne $upgrades) {
             $upgrades | Where-Object { $_.Id -like "$wordToComplete*" } | ForEach-Object {
                 $toolTip = "$($_.Name) [$($_.Version) --> $($_.Available)]"
