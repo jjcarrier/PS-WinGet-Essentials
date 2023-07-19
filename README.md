@@ -110,6 +110,35 @@ This cmdlet support tab completions for the user-defined tags found in the
 
 * winget-restore
 
+#### Setup of winget.packages.json
+
+Before using this cmdlet, a `winget.packages.json` file needs to be manually
+setup. This file is to be placed in the same directory as this module. This may
+for instance be found in:
+`$env:USERPROFILE\Documents\PowerShell\Modules\WinGet-Essentials\<MODULE_VERSION>\modules`
+
+This JSON file is to contain an array of objects describing each package of
+interest. It should have the following form:
+
+```json
+[
+  {
+    "PackageIdentifier": "<WINGET_PACKAGE_ID1>",
+    "Tags": [
+      "<MY_TAG1>",
+      "<MY_TAG2>",
+    ]
+  },
+  {
+    "PackageIdentifier": "<WINGET_PACKAGE_ID2>",
+    "Tags": [
+      "<MY_TAG1>",
+      "<MY_TAG3>",
+    ]
+  }
+]
+```
+
 #### Usage
 
 Example: All packages containing the both the tags: "Dev" and "Essential" will
