@@ -20,7 +20,7 @@ the following functionality:
   * Saves a list of installed software with version info.
   * This will mostly an alias for `winget export --include-versions`.
 
-> **Note**
+> [!NOTE]\
 > A future addition to this module will provide a way for `winget-restore`
   to deploy software from a checkpoint to the host machine. This will leverage
   the user-provided tags as a way to filter what software to restore and a
@@ -44,11 +44,11 @@ Import-Module WinGet-Essentials
 
 The current set of cmdlets provided by this module are:
 
-* Update-WingetSoftware (aliases: winget-update, winup)
-* Checkpoint-WingetSoftware (aliases: winget-checkpoint)
-* Restore-WingetSoftware (aliases: winget-restore)
+* Update-WinGetSoftware (aliases: winget-update, winup)
+* Checkpoint-WinGetSoftware (aliases: winget-checkpoint)
+* Restore-WinGetSoftware (aliases: winget-restore)
 
-## Update-WingetSoftware
+## Update-WinGetSoftware
 
 Provides a basic UI for updating software available in a WinGet repository.
 
@@ -57,16 +57,15 @@ Provides a basic UI for updating software available in a WinGet repository.
 To selectively install updates using a simple UI run:
 
 ```pwsh
-Update-WingetSoftware
+Update-WinGetSoftware
 ```
 
 ![Update UI](img/winget-update-ui.png)
 
-
 To install a specific package run (supports tab-completion for cached updatable package IDs):
 
 ```pwsh
-Update-WingetSoftware <WinGetPackageID>[,<AnotherWinGetPackageID>]
+Update-WinGetSoftware <WinGetPackageID>[,<AnotherWinGetPackageID>]
 ```
 
 ![Update Tab Completion](img/winget-update-cli.png)
@@ -74,7 +73,7 @@ Update-WingetSoftware <WinGetPackageID>[,<AnotherWinGetPackageID>]
 To update the cached list of upgradable package IDs, run:
 
 ```pwsh
-Update-WingetSoftware -Sync
+Update-WinGetSoftware -Sync
 ```
 
 ### Ignore package IDs
@@ -87,25 +86,25 @@ This path may for instance be:
 
 Each line should contain a single winget package ID (verbatim).
 
-> **Warning**
+> [!WARNING]\
 > It is recommended that the user creates a SymLink for this file instead of
   having the file reside directly in this path. This is to avoid accidental
   deletion during `Uninstall-Module`. It also provides more flexibility for
   linking the same file to multiple versions of the module (assuming there are
   no compatibility issues between the versions).
 
-## Checkpoint-WingetSoftware
+## Checkpoint-WinGetSoftware
 
 Stores a snapshot of installed software, including versions. This can be used
 by WinGet natively to reinstall the listed software, or (__in a future release__)
-restore sets of software based on tags using `Restore-WingetSoftware`.
+restore sets of software based on tags using `Restore-WinGetSoftware`.
 
 The checkpoint file and its backup are stored in the same path that this module
 resides in. This path may for instance be:
 
 `$env:USERPROFILE\Documents\PowerShell\Modules\WinGet-Essentials\<MODULE_VERSION>\modules`
 
-> **Warning**
+> [!WARNING]\
 > `Uninstall-Module` will indiscriminately remove files in the associated
   module's directory. Consider moving these files to another location. A future
   version of this module will likely provide a user-configurable way to redirect
@@ -114,10 +113,10 @@ resides in. This path may for instance be:
 ### Usage
 
 ```pwsh
-Checkpoint-WingetSoftware
+Checkpoint-WinGetSoftware
 ```
 
-## Restore-WingetSoftware
+## Restore-WinGetSoftware
 
 Restores a set of software packages based on a locally, user-managed,
 `winget.packages.json` (to be placed in the same directory as this module).
@@ -135,7 +134,7 @@ This path may for instance be:
 
 `$env:USERPROFILE\Documents\PowerShell\Modules\WinGet-Essentials\<MODULE_VERSION>\modules`
 
-> **Warning**
+> [!WARNING]\
 > It is recommended that the user creates a SymLink for this file instead of
   having the file reside directly in this path. This is to avoid accidental
   deletion during `Uninstall-Module`. It also provides more flexibility for
@@ -170,7 +169,7 @@ Example: All packages containing the both the tags: "Dev" and "Essential" will
 be presented in a UI for user refinement of packages to install.
 
 ```pwsh
-Restore-WingetSoftware -Tags Dev,Essential -UseUI
+Restore-WinGetSoftware -Tags Dev,Essential -UseUI
 ```
 
 ![Restore UI](img/winget-restore-ui.png)
@@ -179,7 +178,7 @@ Example: Install all packages tagged with any of the following: "Essential",
 "Desktop" but not containing "Dev".
 
 ```pwsh
-Restore-WingetSoftware -Tags Essential,Desktop -MatchAny -ExcludeTags Dev
+Restore-WinGetSoftware -Tags Essential,Desktop -MatchAny -ExcludeTags Dev
 ```
 
 ![Restore Tab Completion](img/winget-restore-cli.png)
