@@ -1,9 +1,6 @@
 name: Publish
 
 on:
-  push:
-    tags:
-      - '*'
 
   # Allow manually triggering of the workflow.
   workflow_dispatch: {}
