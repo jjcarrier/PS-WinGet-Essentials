@@ -329,7 +329,7 @@ function Update-WinGetSoftware
             [switch]$Interactive
         )
 
-        # From https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerCommonCore/Public/AppInstallerErrors.h
+        # From https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerSharedLib/Public/AppInstallerErrors.h
         $UPDATE_NOT_APPLICABLE = 0x8A15002B
 
         Write-Output "Updating '$($Item.Id)'..."
@@ -343,10 +343,10 @@ function Update-WinGetSoftware
         if (($? -ne $true) -and ($LastExitCode -eq $UPDATE_NOT_APPLICABLE))
         {
             # This is a workaround for an issue currently present in winget where
-            # the listing reports an update, but it is not possible to 'upgrade' the
-            # command. Instead, use the 'install' command. This issue might be
-            # caused by different install wizard on the local system versus what
-            # is present on the winget source.
+            # the listing reports an update, but it is not possible to 'upgrade'.
+            # Instead, use the 'install' command. This issue might be caused by
+            # different install wizard on the local system versus what is
+            # present on the winget source.
             if ($Interactive) {
                 winget install --id $item.Id --interactive
             } else {
