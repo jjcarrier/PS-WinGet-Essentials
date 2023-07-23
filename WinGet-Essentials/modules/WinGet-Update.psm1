@@ -399,16 +399,17 @@ function Update-WinGetSoftware
 
     Clear-Host
     [Console]::CursorVisible = $false
+    $cacheFile = $CacheFilePath.Replace('{HOSTNAME}', $(hostname).ToLower())
 
     if (-not([string]::IsNullOrWhiteSpace($Id)))
     {
         $Id | ForEach-Object {
             winget upgrade $_
             if ($?) {
-                $cache = Get-Content $CacheFile | ConvertFrom-Json
+                $cache = Get-Content $cacheFile | ConvertFrom-Json
                 $cache.upgrades = $cache.upgrades | Where-Object { $_.Id -ne $Id }
                 $cache.hash = 0
-                $cache | ConvertTo-Json | Set-Content $CacheFile
+                $cache | ConvertTo-Json | Set-Content $cacheFile
             }
         }
         return
