@@ -526,4 +526,4 @@ $UpgradesScriptBlock = {
     }
 }
 
-Register-ArgumentCompleter -CommandName Update-WingetSoftware -ParameterName Id -ScriptBlock $UpgradesScriptBlock
+Register-ArgumentCompleter -CommandName Update-WinGetSoftware -ParameterName Id -ScriptBlock $UpgradesScriptBlock
