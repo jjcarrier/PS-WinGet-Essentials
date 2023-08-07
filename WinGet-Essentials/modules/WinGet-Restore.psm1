@@ -9,7 +9,7 @@ $PackageDatabase = "$PSScriptRoot\winget.packages.json"
     PS> Restore-WinGetSoftware -All -UseUI
 
 .EXAMPLE
-    PS> Restore-WinGetSoftware -Tags Dev,Essential
+    PS> Restore-WinGetSoftware -Tag Dev,Essential
 #>
 function Restore-WinGetSoftware
 {
@@ -19,19 +19,20 @@ function Restore-WinGetSoftware
         # A matching package is one that contains all the specified tags.
         # See $MatchAny to change the filtering behavior for this parameter.
         [Parameter(Mandatory = $true, ParameterSetName = 'Filter')]
-        [string[]]$Tags,
+        [string[]]$Tag,
 
-        # When set, the specified list of $Tags will no longer require a package
+        # When set, the specified list of $Tag will no longer require a package
         # to contain all the specified tags for it to be considered a match,
         # as long as one of the tags is associated with the package it will be
         # considered a match. The default behavior is to "Match All" tags.
-        # This switch does not affect $ExcludeTags behavior.
+        # This switch does not affect $ExcludeTag behavior.
         [Parameter(ParameterSetName = 'Filter')]
         [switch]$MatchAny,
 
         # An optional list of tags which will filter a package from the
         # install list if it contains ANY of tags specified in this list.
-        [string[]]$ExcludeTags,
+        [Parameter()]
+        [string[]]$ExcludeTag,
 
         # When set, all packages in "winget.packages.json" will be selected.
         [Parameter(Mandatory, ParameterSetName = 'NoFilter')]
@@ -160,13 +161,13 @@ function Restore-WinGetSoftware
 
     if (-not($All)) {
         $installPackages  = $installPackages | Where-Object {
-            &$isMatch -p1 $Tags -p2 $_.Tags
+            &$isMatch -p1 $Tag -p2 $_.Tags
         }
     }
 
-    if ($ExcludeTags.Count -gt 0) {
+    if ($ExcludeTag.Count -gt 0) {
         $installPackages  = $installPackages | Where-Object {
-            &$MatchNoneScriptBlock -p1 $ExcludeTags -p2 $_.Tags
+            &$MatchNoneScriptBlock -p1 $ExcludeTag -p2 $_.Tags
         }
     }
 
@@ -263,5 +264,5 @@ $RestoreTagScriptBlock = {
     }
 }
 
-Register-ArgumentCompleter -CommandName Restore-WingetSoftware -ParameterName Tags -ScriptBlock $RestoreTagScriptBlock
-Register-ArgumentCompleter -CommandName Restore-WingetSoftware -ParameterName ExcludeTags -ScriptBlock $RestoreTagScriptBlock
+Register-ArgumentCompleter -CommandName Restore-WingetSoftware -ParameterName Tag -ScriptBlock $RestoreTagScriptBlock
+Register-ArgumentCompleter -CommandName Restore-WingetSoftware -ParameterName ExcludeTag -ScriptBlock $RestoreTagScriptBlock
