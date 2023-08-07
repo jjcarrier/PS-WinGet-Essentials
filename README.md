@@ -5,7 +5,7 @@
 ## Description
 
 Provides functionality for improved software management. This module includes
-the following functionality:
+the following primary functionality:
 
 * A simple CLI interface for `winget update`. Allows for:
   * Ignore Package support, via a `winget.{HOSTNAME}.ignore` file.
@@ -47,6 +47,7 @@ The current set of cmdlets provided by this module are:
 * Update-WinGetSoftware (aliases: winget-update, winup)
 * Checkpoint-WinGetSoftware (aliases: winget-checkpoint)
 * Restore-WinGetSoftware (aliases: winget-restore)
+* Initialize-WinGetRestore
 
 ## Update-WinGetSoftware
 
@@ -124,7 +125,9 @@ The set of packages to be installed/restored is determined by tags. The tags
 can be used in two ways: `AND-comparison` or `OR-comparison`. This is determined
 by the `-MatchAny` switch parameter (default behavior is to `Match All` tags).
 This cmdlet support tab completions for the user-defined tags found in the
-`winget.packages.json` file.
+`winget.packages.json` file. A `-NotInstalled` switch can be specified which
+will filter out package IDs that are found in the current `checkpoint` file
+generated from `Checkpoint-WinGetSoftware`.
 
 ### Setup of winget.packages.json
 
@@ -163,6 +166,10 @@ interest. It should have the following form:
 ]
 ```
 
+The helper cmdlet, `Initialize-WinGetRestore`, can be used to link this file
+to the proper directory. See the `Initialize-WinGetRestore` section below for
+more details.
+
 ### Usage
 
 Example: All packages containing the both the tags: "Dev" and "Essential" will
@@ -182,6 +189,27 @@ Restore-WinGetSoftware -Tag Essential,Desktop -MatchAny -ExcludeTags Dev
 ```
 
 ![Restore Tab Completion](img/winget-restore-cli.png)
+
+## Initialize-WinGetRestore
+
+A helper for initializing an instance of `winget.packages.json` for the current
+`Restore-WinGetSoftware` cmdlet. This cmdlet is also called internally by
+`Restore-WinGetSoftware` to handle migrating previous `winget.packages.json`
+instances to the current version.
+
+When using this `Restore-WinGetSoftware` for the first time, the user needs
+to manually create/define this JSON file and ideally, create a SymLink to it.
+This for instance, may be placed in a cloud backup folder that syncs between
+computers so that the package list is shared between multiple systems that
+are to have similar software packages installed.
+
+### Usage
+
+With a `winget.packages.json` created run in an __Adminstrator__ PowerShell:
+
+```pwsh
+Initialize-WinGetRestore -SourceFile .\winget.packages.json
+```
 
 ## Additional Notes
 
