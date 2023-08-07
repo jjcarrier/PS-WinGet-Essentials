@@ -169,7 +169,7 @@ Example: All packages containing the both the tags: "Dev" and "Essential" will
 be presented in a UI for user refinement of packages to install.
 
 ```pwsh
-Restore-WinGetSoftware -Tags Dev,Essential -UseUI
+Restore-WinGetSoftware -Tag Dev,Essential -UseUI
 ```
 
 ![Restore UI](img/winget-restore-ui.png)
@@ -178,7 +178,7 @@ Example: Install all packages tagged with any of the following: "Essential",
 "Desktop" but not containing "Dev".
 
 ```pwsh
-Restore-WinGetSoftware -Tags Essential,Desktop -MatchAny -ExcludeTags Dev
+Restore-WinGetSoftware -Tag Essential,Desktop -MatchAny -ExcludeTags Dev
 ```
 
 ![Restore Tab Completion](img/winget-restore-cli.png)
