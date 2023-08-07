@@ -1,5 +1,6 @@
 #Requires -Modules TableUI
-$PackageDatabase = "$PSScriptRoot\winget.packages.json"
+[string]$PackageDatabase = "$PSScriptRoot\winget.packages.json"
+[string]$CheckpointFilePath = "$PSScriptRoot\winget.{HOSTNAME}.checkpoint"
 
 <#
 .DESCRIPTION
@@ -37,6 +38,12 @@ function Restore-WinGetSoftware
         # When set, all packages in "winget.packages.json" will be selected.
         [Parameter(Mandatory, ParameterSetName = 'NoFilter')]
         [switch]$All,
+
+        # When set, packages listed in the "checkpoint" file (generated via
+        # Checkpoint-WinGetSoftware) will be filtered from the list. Thus
+        # supplying a list of packages that are not installed on the system.
+        [Parameter()]
+        [switch]$NotInstalled,
 
         # When set, a CLI based UI will be presented to allow for more refined
         # selection of packages to install.
@@ -158,6 +165,16 @@ function Restore-WinGetSoftware
     }
 
     $installPackages = Get-Content $PackageDatabase | ConvertFrom-Json
+
+    $checkpointFile = $CheckpointFilePath.Replace('{HOSTNAME}', $(hostname).ToLower())
+    if ($NotInstalled -and (Test-Path $checkpointFile)) {
+        # Check across all sources for packages, not just winget.
+        $checkpointPackageIds = (Get-Content $checkpointFile | ConvertFrom-Json).Sources.Packages.PackageIdentifier
+
+        $installPackages = $installPackages | Where-Object {
+            $checkpointPackageIds -notcontains $_.PackageIdentifier
+        }
+    }
 
     if (-not($All)) {
         $installPackages  = $installPackages | Where-Object {
