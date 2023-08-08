@@ -18,7 +18,7 @@ the following primary functionality:
 * A basic checkpoint command, that:
   * Takes a backup of the last checkpoint.
   * Saves a list of installed software with version info.
-  * This will mostly an alias for `winget export --include-versions`.
+  * This is mostly an alias for `winget export --include-versions`.
 
 > [!NOTE]\
 > A future addition to this module will provide a way for `winget-restore`
@@ -124,7 +124,7 @@ Restores a set of software packages based on a locally, user-managed,
 The set of packages to be installed/restored is determined by tags. The tags
 can be used in two ways: `AND-comparison` or `OR-comparison`. This is determined
 by the `-MatchAny` switch parameter (default behavior is to `Match All` tags).
-This cmdlet support tab completions for the user-defined tags found in the
+This cmdlet supports tab completions for the user-defined tags found in the
 `winget.packages.json` file. A `-NotInstalled` switch can be specified which
 will filter out package IDs that are found in the current `checkpoint` file
 generated from `Checkpoint-WinGetSoftware`.
