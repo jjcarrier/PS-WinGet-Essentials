@@ -3,19 +3,32 @@
 <#
 .DESCRIPTION
     Initialize the local "winget.software.json" need by Restore-WinGetSoftware.
-    This file can be initialized by specifying the file to use which will be
-    symbolically linked. Or it make auto-detect previous instances in other
-    versions of the module currently installed on the system. In such cases,
-    it will make a symlink if one was used previously; otherwise it will copy
-    the previous file.
+    If -SourceFile is specified, the file will be symbolically linked to the
+    appropriate location. When this parameter is not specified the cmdlet will
+    auto-detect other installed module versions and attempt to find the latest
+    existing `winget.packages.json`. In such cases, it will make a symlink if
+    only if one was used previously; otherwise it will copy the previous file.
 
 .EXAMPLE
     PS> Initialize-WinGetRestore -SourceFile "./winget.software.json"
+
+.EXAMPLE
+    PS> Initialize-WinGetRestore
 #>
 function Initialize-WinGetRestore
 {
     param(
+        <#
+        The path to an existing "winget.software.json" file. This file
+        will be symbolically linked.
+        #>
         [string]$SourceFile,
+
+        <#
+        When set, the cmdlet will automatically relaunch using an Administrator
+        PowerShell instance. This cmdlet needs such permissions to create
+        Symbolic Links.
+        #>
         [switch]$Administrator
     )
 
@@ -35,7 +48,7 @@ function Initialize-WinGetRestore
                 "-$($_) $($PSBoundParameters[$_])"
             }
         }
-        $cmdArgs = "-NoLogo -NoExit -Command Update-WingetSoftware $($boundParamsString -join ' ')"
+        $cmdArgs = "-NoLogo -NoExit -Command Initialize-WinGetRestore $($boundParamsString -join ' ')"
         Start-Process -Verb RunAs -FilePath "pwsh" -ArgumentList $cmdArgs
         return
     }
