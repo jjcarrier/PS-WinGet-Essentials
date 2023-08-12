@@ -255,7 +255,7 @@ function Update-WinGetSoftware
         if (-not($result))
         {
             $script:ErrorCount++
-            Request-ContinueOnError
+            Request-ContinueOnError -Code $result
         }
 
         return $result
@@ -268,7 +268,11 @@ function Update-WinGetSoftware
     #>
     function Request-ContinueOnError
     {
-        Write-Warning "An error occurred while executing the last step."
+        param(
+            [int]$Code
+        )
+
+        Write-Warning "An error ($Code) occurred while executing the last step."
 
         if (-not(Request-YesOrNo "Do you want to continue?" $DefaultChoiceYes))
         {
