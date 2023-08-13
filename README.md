@@ -2,31 +2,39 @@
 
 ![PSGallery](https://img.shields.io/powershellgallery/p/WinGet-Essentials)
 
-## Description
+## [Table of Contents](#table-of-contents)
+
+* [Description](#description)
+* [Installation](#installation)
+* [Update-WinGetSoftware](#update-wingetsoftware)
+* [Checkpoint-WinGetSoftware](#checkpoint-wingetsoftware)
+* [Restore-WinGetSoftware](#restore-wingetsoftware)
+* [Initialize-WinGetIgnore](#initialize-wingetignore)
+* [Initialize-WinGetRestore](#initialize-wingetrestore)
+* [Merge-WinGetRestore](#merge-wingetrestore)
+* [Additional Notes](#additional-notes)
+
+## [Description](#table-of-contents)
 
 Provides functionality for improved software management. This module includes
 the following primary functionality:
 
-* A simple CLI interface for `winget update`. Allows for:
-  * Ignore Package support, via a `winget.{HOSTNAME}.ignore` file.
-  * Tab-completion for locally cached available upgradable packages.
+* A simple CLI interface for `winget update`:
+  * Ignore-Package support, via a `winget.{HOSTNAME}.ignore` file.
+  * Tab-completion for locally-cached upgradable packages.
   * An interactive UI for selecting which packages to install.
   * Elevation option to instruct the tool to perform the install as an Administrator.
-* A tag-based deployment tool which allows for:
+* A tag-based deployment tool:
   * Installation of suites of self-maintained tagged package-identifiers.
   * Elevation option to instruct the tool to perform the install as an Administrator.
-* A basic checkpoint command, that:
+  * A helper cmdlet to detect new package identifiers that have not yet been
+    entered into `winget.packages.json`.
+* A basic checkpoint command:
   * Takes a backup of the last checkpoint.
   * Saves a list of installed software with version info.
   * This is mostly an alias for `winget export --include-versions`.
 
-> [!NOTE]\
-> A future addition to this module will provide a way for `winget-restore`
-  to deploy software from a checkpoint to the host machine. This will leverage
-  the user-provided tags as a way to filter what software to restore and a
-  way to use the specified versions or use-latest available versions.
-
-## Installation
+## [Installation](#table-of-contents)
 
 Download/install the module from `PSGallery`:
 
@@ -40,18 +48,14 @@ Add the module to your `$PROFILE`:
 Import-Module WinGet-Essentials
 ```
 
-## Cmdlets
-
-The current set of cmdlets provided by this module are:
-
-* Update-WinGetSoftware (aliases: winget-update, winup)
-* Checkpoint-WinGetSoftware (aliases: winget-checkpoint)
-* Restore-WinGetSoftware (aliases: winget-restore)
-* Initialize-WinGetRestore
-
-## Update-WinGetSoftware
+## [Update-WinGetSoftware](#table-of-contents)
 
 Provides a basic UI for updating software available in a WinGet repository.
+
+### Aliases
+
+* `winget-update`
+* `winup`
 
 ### Usage
 
@@ -77,28 +81,12 @@ To update the cached list of upgradable package IDs, run:
 Update-WinGetSoftware -Sync
 ```
 
-### Ignore package IDs
-
-To ignore specific packages from appearing in this interface, create a
-`winget.{HOSTNAME}.ignore` file in the same directory as the `winget-update.psm1`.
-This path may for instance be:
-
-`$env:USERPROFILE\Documents\PowerShell\Modules\WinGet-Essentials\<MODULE_VERSION>\modules`
-
-Each line should contain a single winget package ID (verbatim).
-
-> [!WARNING]\
-> It is recommended that the user creates a SymLink for this file instead of
-  having the file reside directly in this path. This is to avoid accidental
-  deletion during `Uninstall-Module`. It also provides more flexibility for
-  linking the same file to multiple versions of the module (assuming there are
-  no compatibility issues between the versions).
-
-## Checkpoint-WinGetSoftware
+## [Checkpoint-WinGetSoftware](#table-of-contents)
 
 Stores a snapshot of installed software, including versions. This can be used
-by WinGet natively to reinstall the listed software, or (__in a future release__)
-restore sets of software based on tags using `Restore-WinGetSoftware`.
+by WinGet natively to reinstall the listed software. This cmdlet's output
+is also needed by other functionality of this module, namely `Merge-WinGetSoftware`
+and `Restore-WinGetSoftware` (when using the `-NotInstalled` switch).
 
 The checkpoint file and its backup are stored in the same path that this module
 resides in. This path may for instance be:
@@ -111,16 +99,22 @@ resides in. This path may for instance be:
   version of this module will likely provide a user-configurable way to redirect
   this file to other locations.
 
+### Aliases
+
+* `winget-checkpoint`
+
 ### Usage
 
 ```pwsh
 Checkpoint-WinGetSoftware
 ```
 
-## Restore-WinGetSoftware
+## [Restore-WinGetSoftware](#table-of-contents)
 
 Restores a set of software packages based on a locally, user-managed,
-`winget.packages.json` (to be placed in the same directory as this module).
+`winget.packages.json` (see `Initialize-WinGetRestore` section below for details
+on initializing this file).
+
 The set of packages to be installed/restored is determined by tags. The tags
 can be used in two ways: `AND-comparison` or `OR-comparison`. This is determined
 by the `-MatchAny` switch parameter (default behavior is to `Match All` tags).
@@ -129,20 +123,87 @@ This cmdlet supports tab completions for the user-defined tags found in the
 will filter out package IDs that are found in the current `checkpoint` file
 generated from `Checkpoint-WinGetSoftware`.
 
-### Setup of winget.packages.json
+### Aliases
 
-Before using this cmdlet, a `winget.packages.json` file needs to be manually
-setup. This file is to be placed in the same directory as this module.
-This path may for instance be:
+* `winget-restore`
 
-`$env:USERPROFILE\Documents\PowerShell\Modules\WinGet-Essentials\<MODULE_VERSION>\modules`
+### Usage
+
+Example: All packages containing the both the tags: "Dev" and "Essential" will
+be presented in a UI for user refinement of packages to install.
+
+```pwsh
+Restore-WinGetSoftware -Tag Dev,Essential -UseUI
+```
+
+![Restore UI](img/winget-restore-ui.png)
+
+Example: Install all packages tagged with any of the following: "Essential",
+"Desktop" but not containing "Dev".
+
+```pwsh
+Restore-WinGetSoftware -Tag Essential,Desktop -MatchAny -ExcludeTags Dev
+```
+
+![Restore Tab Completion](img/winget-restore-cli.png)
+
+## [Initialize-WinGetIgnore](#table-of-contents)
+
+A helper for initializing an instance of `winget.{HOSTNAME}.ignore` for the
+current module version. This cmdlet is also called internally by the cmdlets
+to attempt automatic migration of previous `winget.{HOSTNAME}.ignore`
+instances to the current version.
+
+### Adding PackageIdentifiers to the ignore list
+
+To ignore a specific package from appearing in the various supported cmdlets,
+the software package's corresponding `PackageIdentifier` (as indicated by the
+`winget` command) is to be added to a new line entry in the associated
+`winget.{HOSTNAME}.ignore`. Each line should contain a single winget package ID
+(verbatim).
+
+> [!NOTE]\
+> At this time, wild cards are not supported, but may be introduced in a future
+  update.
+
+### Usage
+
+With a `winget.{HOSTNAME}.ignore` run the following command in an
+__Adminstrator__ PowerShell:
+
+```pwsh
+Initialize-WinGetIgnore -SourceFile .\winget.{HOSTNAME}.ignore
+```
+
+> [!NOTE]\
+> The `{HOSTNAME}` section should be replaced with the name of the computer as
+  determined by the `hostname` command. Technically, the name of this source
+  file may be given any name so long as it is symbolically linked, however
+  this naming scheme is used to support a centralized cloud backup location
+  where multiple ignore files exist targeting different computers.
 
 > [!WARNING]\
-> It is recommended that the user creates a SymLink for this file instead of
-  having the file reside directly in this path. This is to avoid accidental
-  deletion during `Uninstall-Module`. It also provides more flexibility for
-  linking the same file to multiple versions of the module (assuming there
-  are no compatibility issues between the versions).
+> While it is possible to have a hard copy of this ignore file placed in
+  the module folder, it is recommended to use this cmdlet so that a
+  symbolic link is used. This is to avoid accidental deletion during
+  `Uninstall-Module`. It also reduces maintenance issues by allowing one
+  copy of the file to be used across multiple versions of the module (assuming
+  there are no compatibility issues between the versions).
+
+## [Initialize-WinGetRestore](#table-of-contents)
+
+A helper for initializing an instance of `winget.packages.json` for the current
+`Restore-WinGetSoftware` cmdlet. The `Initialize-WinGetRestore` cmdlet is also
+called internally by `Restore-WinGetSoftware` to handle migrating previous
+`winget.packages.json` instances to the current version.
+
+When using this `Restore-WinGetSoftware` for the first time, the user needs
+to manually create/define this JSON file and ideally, create a SymLink to it.
+This for instance, may be placed in a cloud backup folder that syncs between
+computers so that the package list is shared between multiple systems that
+are to have similar software packages installed.
+
+### Setup of winget.packages.json
 
 This JSON file is to contain an array of objects describing each package of
 interest. It should have the following form:
@@ -166,43 +227,6 @@ interest. It should have the following form:
 ]
 ```
 
-The helper cmdlet, `Initialize-WinGetRestore`, can be used to link this file
-to the proper directory. See the `Initialize-WinGetRestore` section below for
-more details.
-
-### Usage
-
-Example: All packages containing the both the tags: "Dev" and "Essential" will
-be presented in a UI for user refinement of packages to install.
-
-```pwsh
-Restore-WinGetSoftware -Tag Dev,Essential -UseUI
-```
-
-![Restore UI](img/winget-restore-ui.png)
-
-Example: Install all packages tagged with any of the following: "Essential",
-"Desktop" but not containing "Dev".
-
-```pwsh
-Restore-WinGetSoftware -Tag Essential,Desktop -MatchAny -ExcludeTags Dev
-```
-
-![Restore Tab Completion](img/winget-restore-cli.png)
-
-## Initialize-WinGetRestore
-
-A helper for initializing an instance of `winget.packages.json` for the current
-`Restore-WinGetSoftware` cmdlet. This cmdlet is also called internally by
-`Restore-WinGetSoftware` to handle migrating previous `winget.packages.json`
-instances to the current version.
-
-When using this `Restore-WinGetSoftware` for the first time, the user needs
-to manually create/define this JSON file and ideally, create a SymLink to it.
-This for instance, may be placed in a cloud backup folder that syncs between
-computers so that the package list is shared between multiple systems that
-are to have similar software packages installed.
-
 ### Usage
 
 With a `winget.packages.json` created run in an __Adminstrator__ PowerShell:
@@ -211,7 +235,23 @@ With a `winget.packages.json` created run in an __Adminstrator__ PowerShell:
 Initialize-WinGetRestore -SourceFile .\winget.packages.json
 ```
 
-## Additional Notes
+## [Merge-WinGetRestore](#table-of-contents)
+
+A helper for detecting package IDs installed on the host system that are not
+present in `winget.packages.json`. This cmdlet will confirm with the user
+whether or not to add the package to the file. If added, the user will also
+be asked what tags to assign the package (if any).
+
+### Usage
+
+Running the command below on two or more systems will allow the user to easily
+create a superset of software package IDs.
+
+```pwsh
+Merge-WinGetRestore
+```
+
+## [Additional Notes](#table-of-contents)
 
 One feature that might be missing from a tool containing the word `Essentials`
 is a tab-completion interface for winget itself. This is currently left out of
@@ -223,4 +263,4 @@ in any case this is a trivial feature to add and is well-documented by Microsoft
 Other code repositories provide suites of tab-completion support for various
 commands such as:
 
-[PSTabCompletions Git Repository](https://github.com/jjcarrier/PSTabCompletions)
+[PS-TabCompletions Git Repository](https://github.com/jjcarrier/PS-TabCompletions)
