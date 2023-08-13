@@ -94,11 +94,11 @@ function Initialize-WinGetResource
 
 <#
 .DESCRIPTION
-    Initialize the local "winget.software.json" need by Restore-WinGetSoftware.
+    Initialize the local "winget.software.json" needed by Restore-WinGetSoftware.
     If -SourceFile is specified, the file will be symbolically linked to the
-    appropriate location. When this parameter is not specified the cmdlet will
+    appropriate location. When this parameter is not specified, the cmdlet will
     auto-detect other installed module versions and attempt to find the latest
-    existing `winget.packages.json`. In such cases, it will make a symlink if
+    existing "winget.packages.json". In such cases, it will make a symlink
     only if one was used previously; otherwise it will copy the previous file.
 
 .EXAMPLE
