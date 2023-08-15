@@ -96,9 +96,10 @@ function Restore-WinGetSoftware
     }
 
     if (-not(Test-Administrator) -and -not($Force)) {
-        Write-Warning 'Some programs will not install correctly if winget is used without administrator rights. This is particularly true for zip-based installs.'
-        Write-Host 'Press any key to continue ...';
-        $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');
+        Write-Warning ('Some programs will not install correctly if WinGet is used without administrator rights. ' +
+            'This is particularly true for zip-based installs which involve the creation of symbolic links to export the utility the WinGet "Links" path.')
+        Write-Host 'Press any key to continue ...'
+        $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
     }
 
     if ($Force -and -not $Confirm){
@@ -107,7 +108,8 @@ function Restore-WinGetSoftware
 
     Initialize-WinGetRestore | Out-Null
     if (-not(Test-Path $PackageDatabase)) {
-        Write-Error "`"$PackageDatabase`" does not exist. Please create this file and populate it with tagged winget package identifiers. Then use Initialize-WinGetRestore to setup a symlink to this file."
+        Write-Error ("`"$PackageDatabase`" does not exist. Please create this file and populate it with tagged winget package identifiers. " +
+            "Then use Initialize-WinGetRestore to setup a symlink to this file.")
         return
     }
 
@@ -168,12 +170,17 @@ function Restore-WinGetSoftware
     $installPackages = Get-Content $PackageDatabase | ConvertFrom-Json
 
     $checkpointFile = $CheckpointFilePath.Replace('{HOSTNAME}', $(hostname).ToLower())
-    if ($NotInstalled -and (Test-Path $checkpointFile)) {
-        # Check across all sources for packages, not just winget.
-        $checkpointPackageIds = (Get-Content $checkpointFile | ConvertFrom-Json).Sources.Packages.PackageIdentifier
+    if ($NotInstalled) {
+        if (Test-Path $checkpointFile) {
+            # Check across all sources for packages, not just winget.
+            $checkpointPackageIds = (Get-Content $checkpointFile | ConvertFrom-Json).Sources.Packages.PackageIdentifier
 
-        $installPackages = $installPackages | Where-Object {
-            $checkpointPackageIds -notcontains $_.PackageIdentifier
+            $installPackages = $installPackages | Where-Object {
+                $checkpointPackageIds -notcontains $_.PackageIdentifier
+            }
+        } else {
+            Write-Error "No checkpoint file found. 'Checkpoint-WinGetSoftware' should be run before using -NotInstalled."
+            return
         }
     }
 
