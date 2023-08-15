@@ -36,7 +36,7 @@ function Restore-WinGetSoftware
         # An optional list of tags which will filter a package from the
         # install list if it contains ANY of tags specified in this list.
         [Parameter()]
-        [string[]]$ExcludeTag,
+        [string[]]$ExcludeTag = @(),
 
         # When set, all packages in "winget.packages.json" will be selected.
         [Parameter(Mandatory, ParameterSetName = 'NoFilter')]
