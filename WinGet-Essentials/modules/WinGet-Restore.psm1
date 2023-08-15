@@ -1,4 +1,5 @@
 #Requires -Modules TableUI
+Import-Module "$PSScriptRoot\WinGet-Utils.psm1"
 [string]$PackageDatabase = "$PSScriptRoot\winget.packages.json"
 [string]$CheckpointFilePath = "$PSScriptRoot\winget.{HOSTNAME}.checkpoint"
 
@@ -63,12 +64,6 @@ function Restore-WinGetSoftware
         [Parameter()]
         [switch]$Administrator
     )
-
-    function Test-Administrator
-    {
-        $user = [Security.Principal.WindowsIdentity]::GetCurrent();
-        (New-Object Security.Principal.WindowsPrincipal $user).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
-    }
 
     function Write-ProgressHelper
     {

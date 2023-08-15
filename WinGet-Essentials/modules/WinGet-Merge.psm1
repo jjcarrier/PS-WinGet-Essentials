@@ -1,6 +1,6 @@
 Set-StrictMode -Version 2
+Import-Module "$PSScriptRoot\WinGet-Utils.psm1"
 
-[string]$IgnoreFilePath = "$PSScriptRoot\winget.{HOSTNAME}.ignore"
 [string]$CheckpointFilePath = "$PSScriptRoot\winget.{HOSTNAME}.checkpoint"
 [string]$PackageDatabase = "$PSScriptRoot\winget.packages.json"
 
@@ -52,15 +52,7 @@ function Merge-WinGetRestore
     if ($NoIgnore) {
         # Skip ignore package filtering.
     } else {
-        # TODO: replace with Get-WinGetSoftwareIgnores
-
-        $ignorePackages = $null
-        $ignoreFile = $IgnoreFilePath.Replace('{HOSTNAME}', $(hostname).ToLower())
-        if (Test-Path $ignoreFile)
-        {
-            $ignorePackages = Get-Content $ignoreFile
-        }
-
+        $ignorePackages = Get-WinGetSoftwareIgnores
         $newPackages = $newPackages | Where-Object { $ignorePackages -notcontains $_ }
     }
 
