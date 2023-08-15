@@ -1,5 +1,6 @@
 #Requires -Modules TextTable, TableUI
 Set-StrictMode -Version 2
+Import-Module "$PSScriptRoot\WinGet-Utils.psm1"
 
 [int]$ErrorCount = 0
 [int]$IndentLevel = 0
@@ -10,7 +11,6 @@ Set-StrictMode -Version 2
 
 [string]$SourceFilter = "--source winget"
 [string]$CacheFilePath = "$PSScriptRoot/winget.{HOSTNAME}.cache"
-[string]$IgnoreFilePath = "$PSScriptRoot/winget.{HOSTNAME}.ignore"
 
 # List of all apps that are available in a known source
 # winget list | ConvertFrom-TextTable | Where-Object { -not([string]::IsNullOrWhiteSpace($_.Source)) } | Format-Table
@@ -32,21 +32,6 @@ function Get-ListHash
     $writer.Flush()
     $stringAsStream.Position = 0
     return (Get-FileHash -InputStream $stringAsStream).Hash
-}
-
-<#
-.DESCRIPTION
-    Gets as list of winget upgrade IDs to ignore.
-#>
-function Get-WinGetSoftwareIgnores
-{
-    $ignoreFile = $IgnoreFilePath.Replace('{HOSTNAME}', $(hostname).ToLower())
-    if (Test-Path $ignoreFile)
-    {
-        return Get-Content $ignoreFile
-    }
-
-    return $null
 }
 
 <#
@@ -378,12 +363,6 @@ function Update-WinGetSoftware
         Write-Output "`r▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
         Write-Output "[ $i / $($UpgradeTable.Count) ] Upgrading '$($UpgradeTable[$UpgradeIndex].Name)'"
         Write-Output "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬`n"
-    }
-
-    function Test-Administrator
-    {
-        $user = [Security.Principal.WindowsIdentity]::GetCurrent();
-        return (New-Object Security.Principal.WindowsPrincipal $user).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
     }
 
     if ($Administrator -and -not(Test-Administrator)) {
