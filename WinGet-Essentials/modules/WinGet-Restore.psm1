@@ -97,7 +97,7 @@ function Restore-WinGetSoftware
 
     if (-not(Test-Administrator) -and -not($Force)) {
         Write-Warning 'Some programs will not install correctly if winget is used without administrator rights. This is particularly true for zip-based installs.'
-        Write-Host -NoNewLine 'Press any key to continue ...';
+        Write-Host 'Press any key to continue ...';
         $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');
     }
 
