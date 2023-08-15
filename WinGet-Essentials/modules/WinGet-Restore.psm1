@@ -107,8 +107,8 @@ function Restore-WinGetSoftware
 
     Initialize-WinGetRestore | Out-Null
     if (-not(Test-Path $PackageDatabase)) {
-        Write-Error "`"$PackageDatabase`" does not exist. Please create this file and populate it with tagged winget package identifiers."
-        Write-Error "Use Initialize-WinGetRestore to setup a symlink to this file."
+        Write-Error "`"$PackageDatabase`" does not exist. Please create this file and populate it with tagged winget package identifiers. Then use Initialize-WinGetRestore to setup a symlink to this file."
+        return
     }
 
     $MatchAnyScriptBlock = {
