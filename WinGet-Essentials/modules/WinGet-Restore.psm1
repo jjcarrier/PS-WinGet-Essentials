@@ -1,5 +1,7 @@
 #Requires -Modules TableUI
+Set-StrictMode -Version 2
 Import-Module "$PSScriptRoot\WinGet-Utils.psm1"
+
 [string]$PackageDatabase = "$PSScriptRoot\winget.packages.json"
 [string]$CheckpointFilePath = "$PSScriptRoot\winget.{HOSTNAME}.checkpoint"
 

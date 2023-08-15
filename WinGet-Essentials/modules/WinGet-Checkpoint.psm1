@@ -1,3 +1,5 @@
+Set-StrictMode -Version 2
+
 [string]$CheckpointFilePath = "$PSScriptRoot/winget.{HOSTNAME}.checkpoint"
 
 <#
