@@ -15,13 +15,20 @@ function Merge-WinGetRestore
         [switch]$NoIgnore,
 
         # Skip prompts for confirmation to merge missing package IDs.
+        # Each package will be prompted for tagging unless -NoTags is also set.
         [switch]$MergeAll,
 
         # Skip prompts for tagging new package IDs.
         [switch]$NoTags,
 
         # Skips performing a checkpoint.
-        [switch]$NoCheckpoint
+        [switch]$NoCheckpoint,
+
+        # When set, a CLI based UI will be presented to allow for more refined
+        # selection of packages to merge into 'winget.packages.json'. This may
+        # be paired with -MergeAll to skip the additional final prompt to merge
+        # a package.
+        [switch]$UseUI
     )
 
     if ($NoCheckpoint) {
@@ -44,20 +51,60 @@ function Merge-WinGetRestore
         return
     }
 
-    $packages = Get-Content $PackageDatabase | ConvertFrom-Json
-
-    $newPackages = $installedPackages.PackageIdentifier | Where-Object { $packages.PackageIdentifier -notcontains $_ }
-    $newPackages = $newPackages | Sort-Object -Unique
+    $packages = @(Get-Content $PackageDatabase | ConvertFrom-Json)
+    if ($packages.Count -eq 0) {
+        $newPackages = $installedPackages
+    } else {
+        $newPackages = $installedPackages | Where-Object { $packages.PackageIdentifier -notcontains $_.PackageIdentifier }
+    }
 
     if ($NoIgnore) {
         # Skip ignore package filtering.
     } else {
         $ignorePackages = Get-WinGetSoftwareIgnores
-        $newPackages = $newPackages | Where-Object { $ignorePackages -notcontains $_ }
+        $newPackages = $newPackages | Where-Object { $ignorePackages -notcontains $_.PackageIdentifier }
+    }
+
+    $newPackages = $newPackages | Sort-Object -Unique -Property PackageIdentifier
+
+    if ($UseUI) {
+        $selections = [bool[]]@()
+
+        $ShowPackageDetailsScriptBlock = {
+            param($currentSelections, $selectedIndex)
+            $command = "winget show $($newPackages[$selectedIndex].PackageIdentifier)"
+            Clear-Host
+            Invoke-Expression $command
+            Write-Output "`n[Press ENTER to return.]"
+            [Console]::CursorVisible = $false
+            $cursorPos = $host.UI.RawUI.CursorPosition
+            while ($host.ui.RawUI.ReadKey().VirtualKeyCode -ne [ConsoleKey]::Enter) {
+                $host.UI.RawUI.CursorPosition = $cursorPos
+                [Console]::CursorVisible = $false
+            }
+        }
+
+        $TableUIArgs = @{
+            Table = $newPackages
+            Title = 'Select Software to Merge'
+            EnterKeyDescription = "Press ENTER to show selection details.                      "
+            EnterKeyScript = $ShowPackageDetailsScriptBlock
+            DefaultMemberToShow = "PackageIdentifier"
+            SelectedItemMembersToShow = @("PackageIdentifier")
+            Selections = ([ref]$selections)
+        }
+
+        Show-TableUI @TableUIArgs
+
+        if ($null -eq $selections) {
+            $newPackages = @();
+        } else {
+            $newPackages = $newPackages | Where-Object { $selections[$newPackages.indexOf($_)] }
+        }
     }
 
     $jsonModified = $false
-    $newPackages | ForEach-Object {
+    $newPackages.PackageIdentifier | ForEach-Object {
         $merge = $true
         if (-not($MergeAll)) {
             $question = "Merge package '$_' into 'winget.packages.json'?"
