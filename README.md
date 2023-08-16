@@ -6,6 +6,7 @@
 
 * [Description](#description)
 * [Installation](#installation)
+* [Upgrading](#upgrading)
 * [Update-WinGetSoftware](#update-wingetsoftware)
 * [Checkpoint-WinGetSoftware](#checkpoint-wingetsoftware)
 * [Restore-WinGetSoftware](#restore-wingetsoftware)
@@ -47,6 +48,63 @@ Add the module to your `$PROFILE`:
 ```pwsh
 Import-Module WinGet-Essentials
 ```
+
+For first time users, the following steps are recommended for setting up
+the various resources needed by the cmdlets:
+
+1. Open an Administrator instance of PowerShell
+2. Change directory to a folder where you wish to store the physical copy of
+   the resource files (i.e. the ignore and package list files).
+3. Run:
+
+   ```pwsh
+   $ignoreFile = New-Item "winget.$((hostname).ToLower()).ignore"
+   $packagesFile = New-Item "winget.packages.json"
+   Initialize-WinGetIgnore -SourceFile $ignoreFile
+   Initialize-WinGetRestore -SourceFile $packagesFile
+   ```
+
+4. Run the following which will capture the installed software available on
+   WinGet and provide a UI to select what package IDs to add to the list of
+   restorable packages. After making the selections the user will be prompted
+   to tag each of these packages. The `-MergeAll` switch skips a follow up
+   confirmation after the selections have been made from the UI:
+
+   ```pwsh
+   Merge-WinGetRestore -UseUI -MergeAll
+   ```
+
+5. Finally, for any of the packages you opt'd not to add to `winget.packages.json`
+   consider adding these to the ignore file that was just created (each entry
+   should be on its own line).
+
+With the above steps in place, the tools can generally be used without
+administrator privileges, but for installation of packages, this will depend on
+the particular package.
+
+## [Upgrading](#table-of-contents)
+
+To upgrade to a new release of the module run:
+
+```pwsh
+Upgrade-Module -Name WinGet-Essentials -Repository PSGallery
+```
+
+After the upgrade completes, it is advisable to run the following commands in
+an administrator PowerShell instance to allow new symbolic links to be created.
+Some cmdlets will attempt to perform this automatically, but it will only
+be possible to create a SymLink if the cmdlet is running in an administrator
+PowerShell instance.
+
+```pwsh
+Initialize-WinGetIgnore
+Initialize-WinGetRestore
+```
+
+> [!NOTE]\
+> The commands above will find the previous module install to determine where
+  the resource files reside. If no such files existed, then it will be necessary
+  to provide the `-SourceFile` parameter to the associated cmdlets.
 
 ## [Update-WinGetSoftware](#table-of-contents)
 
