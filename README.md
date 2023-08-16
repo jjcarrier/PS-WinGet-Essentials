@@ -90,6 +90,11 @@ To upgrade to a new release of the module run:
 Upgrade-Module -Name WinGet-Essentials -Repository PSGallery
 ```
 
+> [!NOTE]\
+> If the `WinGet-Essentials` module is already loaded, restart the terminal or
+  reload the module explicitly via `Remove-Module` followed by `Import-Module`.
+
+
 After the upgrade completes, it is advisable to run the following commands in
 an administrator PowerShell instance to allow new symbolic links to be created.
 Some cmdlets will attempt to perform this automatically, but it will only
