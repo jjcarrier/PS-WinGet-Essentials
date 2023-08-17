@@ -1,5 +1,5 @@
 #Requires -Modules TextTable, TableUI
-Set-StrictMode -Version 2
+Set-StrictMode -Version 3
 Import-Module "$PSScriptRoot\WinGet-Utils.psm1"
 
 [int]$ErrorCount = 0
@@ -343,6 +343,7 @@ function Update-WinGetSoftware
             }
         }
 
+        # Ignore exit code 3010 (seems to indicate "restart required")?
         if (Test-LastCommandResult)
         {
             # TODO remove entry from cache and be sure to refresh the hash.

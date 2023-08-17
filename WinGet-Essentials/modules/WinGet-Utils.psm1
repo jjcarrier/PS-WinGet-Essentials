@@ -1,4 +1,4 @@
-Set-StrictMode -Version 2
+Set-StrictMode -Version 3
 
 [string]$IgnoreFilePath = "$PSScriptRoot\winget.{HOSTNAME}.ignore"
 
