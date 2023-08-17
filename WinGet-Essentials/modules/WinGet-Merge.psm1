@@ -65,6 +65,11 @@ function Merge-WinGetRestore
         $newPackages = $newPackages | Where-Object { $ignorePackages -notcontains $_.PackageIdentifier }
     }
 
+    if ($null -eq $newPackages) {
+        Write-Output "Nothing to merge to: '$PackageDatabase'"
+        return
+    }
+
     $newPackages = $newPackages | Sort-Object -Unique -Property PackageIdentifier
 
     if ($UseUI) {
