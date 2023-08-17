@@ -1,4 +1,4 @@
-Set-StrictMode -Version 2
+Set-StrictMode -Version 3
 Import-Module "$PSScriptRoot\WinGet-Utils.psm1"
 
 [string]$PackageDatabase = "$PSScriptRoot\winget.packages.json"
