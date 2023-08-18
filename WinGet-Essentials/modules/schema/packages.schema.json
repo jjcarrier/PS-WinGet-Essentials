@@ -1,0 +1,62 @@
+{
+    "definitions": {},
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "array",
+    "title": "Array of packages",
+    "items": {
+        "type": "object",
+        "required":[
+            "PackageIdentifier",
+            "Tags"
+        ],
+        "properties": {
+            "PackageIdentifier": {
+                "type": "string",
+                "description": "The WinGet specified PackageIdentifier."
+            },
+            "Tags": {
+                "type": "array",
+                "description": "A user-defined tags to associate with the PackageIdentifier.",
+                "items": {
+                    "type": "string"
+                }
+            },
+            "PostInstall": {
+                "type": "object",
+                "required": [
+                    "Commands",
+                    "Run",
+                    "OnError"
+                ],
+                "properties": {
+                    "Commands": {
+                        "type": "array",
+                        "description": "The sequence of commands to execute in PowerShell.",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "Run": {
+                        "type": "string",
+                        "description": "Defines the condition when to run the post-install commands. OnSuccess = Only run if the install was successful. Always = Always run even if the install failed due to user actions. Prompt = Always prompt the user whether to run the commands or not. PromptOnError = Only prompt the user if the install failed, otherwise always run the commands.",
+                        "enum": [
+                            "OnSuccess",
+                            "Prompt",
+                            "PromptOnError",
+                            "Always"
+                        ]
+                    },
+                    "OnError": {
+                        "type": "string",
+                        "description": "Defines the behavior when a command encounters an error. Continue = continue command execution. Skip = skip remaining commands. Prompt = prompt on error giving the user the choice to continue, skip, or re-run.",
+                        "enum": [
+                            "Prompt",
+                            "Skip",
+                            "Continue"
+                        ]
+                    }
+                }
+            }
+        }
+    }
+  }

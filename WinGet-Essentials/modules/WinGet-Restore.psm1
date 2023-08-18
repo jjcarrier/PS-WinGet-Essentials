@@ -3,6 +3,7 @@ Set-StrictMode -Version 3
 Import-Module "$PSScriptRoot\WinGet-Utils.psm1"
 
 [string]$PackageDatabase = "$PSScriptRoot\winget.packages.json"
+[string]$PackageDatabaseSchema = "$PSScriptRoot\schema\packages.schema.json"
 [string]$CheckpointFilePath = "$PSScriptRoot\winget.{HOSTNAME}.checkpoint"
 
 <#
@@ -167,6 +168,11 @@ function Restore-WinGetSoftware
         $isMatch = $MatchAllScriptBlock
     }
 
+    if (-not(Test-Json -Json ([string](Get-Content $PackageDatabase)) -SchemaFile $PackageDatabaseSchema)) {
+        Write-Error "Schema validation failed for: '$PackageDatabase'. Please fix and try again. The file can be validated against '$PackageDatabaseSchema'."
+        return
+    }
+
     $installPackages = Get-Content $PackageDatabase | ConvertFrom-Json
 
     $checkpointFile = $CheckpointFilePath.Replace('{HOSTNAME}', $(hostname).ToLower())
@@ -254,16 +260,7 @@ function Restore-WinGetSoftware
         Write-ProgressHelper -Packages $selectedPackages -PackageIndex $packageIndex
 
         if ($PSCmdlet.ShouldProcess($installPackage.PackageIdentifier)) {
-            if ($Interactive) {
-                winget install --id $installPackage.PackageIdentifier --interactive
-            } else {
-                winget install --id $installPackage.PackageIdentifier
-            }
-
-            if ($?)
-            {
-                $errorCount++
-            }
+            Install-WinGetSoftware -Package $installPackage -ErrorCount ([ref]$errorCount)
         } else {
             Write-Output "Skipped."
         }
@@ -275,6 +272,88 @@ function Restore-WinGetSoftware
         throw "Done (Errors = $errorCount)."
     } else {
         Write-Output "Done."
+    }
+}
+
+function Install-WinGetSoftware
+{
+    param(
+        [object]$Package,
+        [ref]$ErrorCount
+    )
+
+    $postInstallQuestion = "Run post-install command(s)?"
+    $postInstallChoices = @(
+        [System.Management.Automation.Host.ChoiceDescription]::new("&Yes", "Do run post-install command")
+        [System.Management.Automation.Host.ChoiceDescription]::new("&No", "Do not run post-install command")
+    )
+
+    $runPostInstall = ($Package.PSobject.Properties.Name -contains "PostInstall")
+
+    if ($Interactive) {
+        winget install --id $Package.PackageIdentifier --interactive
+    } else {
+        winget install --id $Package.PackageIdentifier
+    }
+
+    if ($?) {
+        if ($Package.PostInstall.Run -eq "Prompt") {
+            $decision = $Host.UI.PromptForChoice($null, $postInstallQuestion, $postInstallChoices, 0)
+            $runPostInstall = $runPostInstall -and ($decision -eq 0)
+        } else {
+            $runPostInstall = $runPostInstall -and (
+                ($Package.PostInstall.Run -eq "Always") -or
+                ($Package.PostInstall.Run -eq "OnSuccess"))
+        }
+    } else {
+        if (($Package.PostInstall.Run -eq "Prompt") -or
+            ($Package.PostInstall.Run -eq "PromptOnError")) {
+            $decision = $Host.UI.PromptForChoice($null, $postInstallQuestion, $postInstallChoices, 1)
+            $runPostInstall = $runPostInstall -and ($decision -eq 0)
+        } else {
+            $runPostInstall = $runPostInstall -and ($Package.PostInstall.Run -eq "Always")
+            $ErrorCount.Value++
+        }
+    }
+
+    if (-not($runPostInstall)) { continue }
+
+    foreach ($cmd in $Package.PostInstall.Commands) {
+        $runCommand = $true
+        while ($runCommand) {
+            $runCommand = $false
+            Write-Output "Executing: '$cmd'"
+            $errorReult = $false
+            try {
+                $global:LASTEXITCODE = 0
+                Invoke-Expression $cmd -ErrorVariable errorOutput
+                $errorReult = ($LASTEXITCODE -ne 0) -or -not($?) -or -not([string]::IsNullOrEmpty($errorOutput))
+            } catch {
+                Write-Output "Last command encountered an error: $_"
+                $errorReult = $true
+            }
+
+            if ($errorReult) {
+                $ErrorCount.Value++
+                if ($Package.PostInstall.OnError -eq "Skip") {
+                    break
+                } elseif ($Package.PostInstall.OnError -eq "Prompt") {
+                    $title = "An error occurred during the last post-install command"
+                    $question = "What action should be performed?"
+                    $choices = @(
+                        [System.Management.Automation.Host.ChoiceDescription]::new("&Continue", "Continue with the next command")
+                        [System.Management.Automation.Host.ChoiceDescription]::new("&Re-Run", "Re-run the last command")
+                        [System.Management.Automation.Host.ChoiceDescription]::new("&Skip", "Skip the remaining commands for the current package")
+                    )
+
+                    $decision = $Host.UI.PromptForChoice($title, $question, $choices, 2)
+                    $runCommand = $decision -eq 1
+                    if ($decision -eq 2) { return }
+                } else {
+                    # "Continue", do nothing.
+                }
+            }
+        }
     }
 }
 
