@@ -329,7 +329,7 @@ function Update-WinGetSoftware
             winget upgrade --id $item.Id
         }
 
-        if (($? -ne $true) -and ($LastExitCode -eq $UPDATE_NOT_APPLICABLE))
+        if (-not($?) -and ($LastExitCode -eq $UPDATE_NOT_APPLICABLE))
         {
             # This is a workaround for an issue currently present in winget where
             # the listing reports an update, but it is not possible to 'upgrade'.
