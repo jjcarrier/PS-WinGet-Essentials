@@ -94,7 +94,6 @@ Upgrade-Module -Name WinGet-Essentials -Repository PSGallery
 > If the `WinGet-Essentials` module is already loaded, restart the terminal or
   reload the module explicitly via `Remove-Module` followed by `Import-Module`.
 
-
 After the upgrade completes, it is advisable to run the following commands in
 an administrator PowerShell instance to allow new symbolic links to be created.
 Some cmdlets will attempt to perform this automatically, but it will only
@@ -269,7 +268,7 @@ are to have similar software packages installed.
 ### Setup of winget.packages.json
 
 This JSON file is to contain an array of objects describing each package of
-interest. It should have the following form:
+interest. It should, at a minimum, have the following form:
 
 ```json
 [
@@ -288,6 +287,48 @@ interest. It should have the following form:
     ]
   }
 ]
+```
+
+When editing this file, a user may use the available schema-file for assistance
+and validation. The following entry may be added (replacing `<PATH_TO_MODULE>`
+with the location to the installed `WinGet-Essentials` module) to a VS Code's
+user/workspace settings (assuming the file is given the default name of
+`winget.packages.json`):
+
+```json
+"json.schemas": [
+    {
+        "fileMatch": [
+          "/winget.packages.json"
+        ],
+        "url": "<PATH_TO_MODULE>/modules/schema/packages.schema.json"
+    }
+]
+```
+
+### Example PostInstall Entry
+
+Below is an example entry for installing `python` (version 3.11) from `winget`
+and disabling the `winstore` aliases during post-installation. If an error
+occurs during install or during post-install command execution the user will be
+prompted.
+
+```json
+  {
+    "PackageIdentifier": "Python.Python.3.11",
+    "Tags": [
+      "Dev",
+      "Essential"
+    ],
+    "PostInstall": {
+      "Commands": [
+        "Remove-Item \"$env:LOCALAPPDATA\\Microsoft\\WindowsApps\\python.exe\"",
+        "Remove-Item \"$env:LOCALAPPDATA\\Microsoft\\WindowsApps\\python3.exe\""
+      ],
+      "Run": "OnSuccess",
+      "OnError": "Prompt"
+    }
+  }
 ```
 
 ### Usage
