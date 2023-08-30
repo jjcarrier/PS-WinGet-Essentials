@@ -241,7 +241,7 @@ function Restore-WinGetSoftware
         if ($null -eq $selections) {
             $selectedPackages = @();
         } else {
-            $selectedPackages = $installPackages | Where-Object { $selections[$installPackages.indexOf($_)] }
+            $selectedPackages = @($installPackages | Where-Object { $selections[$installPackages.indexOf($_)] })
         }
     } else {
         $selectedPackages = $installPackages
