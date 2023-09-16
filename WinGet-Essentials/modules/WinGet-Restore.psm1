@@ -296,7 +296,11 @@ function Install-WinGetSoftware
         winget install --id $Package.PackageIdentifier
     }
 
-    if ($?) {
+    $installOk = $?
+
+    if (-not($runPostInstall)) { continue }
+
+    if ($installOk) {
         if ($Package.PostInstall.Run -eq "Prompt") {
             $decision = $Host.UI.PromptForChoice($null, $postInstallQuestion, $postInstallChoices, 0)
             $runPostInstall = $runPostInstall -and ($decision -eq 0)
