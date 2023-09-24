@@ -204,7 +204,7 @@ Example: Install all packages tagged with any of the following: "Essential",
 "Desktop" but not containing "Dev".
 
 ```pwsh
-Restore-WinGetSoftware -Tag Essential,Desktop -MatchAny -ExcludeTags Dev
+Restore-WinGetSoftware -Tag Essential,Desktop -MatchAny -ExcludeTag Dev
 ```
 
 ![Restore Tab Completion](img/winget-restore-cli.png)
