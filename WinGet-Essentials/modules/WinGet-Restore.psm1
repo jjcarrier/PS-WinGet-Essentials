@@ -179,7 +179,7 @@ function Restore-WinGetSoftware
         return
     }
 
-    $installPackages = Get-Content $PackageDatabase | ConvertFrom-Json
+    $installPackages = @(Get-Content $PackageDatabase | ConvertFrom-Json)
 
     $checkpointFile = $CheckpointFilePath.Replace('{HOSTNAME}', $(hostname).ToLower())
     if ($NotInstalled) {
@@ -187,9 +187,9 @@ function Restore-WinGetSoftware
             # Check across all sources for packages, not just winget.
             $checkpointPackageIds = (Get-Content $checkpointFile | ConvertFrom-Json).Sources.Packages.PackageIdentifier
 
-            $installPackages = $installPackages | Where-Object {
+            $installPackages = @($installPackages | Where-Object {
                 $checkpointPackageIds -notcontains $_.PackageIdentifier
-            }
+            })
         } else {
             Write-Error "No checkpoint file found. 'Checkpoint-WinGetSoftware' should be run before using -NotInstalled."
             return
@@ -197,15 +197,15 @@ function Restore-WinGetSoftware
     }
 
     if (-not($All)) {
-        $installPackages  = $installPackages | Where-Object {
+        $installPackages  = @($installPackages | Where-Object {
             &$isMatch -p1 $Tag -p2 $_.Tags
-        }
+        })
     }
 
     if ($ExcludeTag.Count -gt 0) {
-        $installPackages  = $installPackages | Where-Object {
+        $installPackages  = @($installPackages | Where-Object {
             &$MatchNoneScriptBlock -p1 $ExcludeTag -p2 $_.Tags
-        }
+        })
     }
 
     if ($installPackages.Count -eq 0) {
