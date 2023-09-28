@@ -109,7 +109,11 @@ function Restore-WinGetSoftware
         $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
     }
 
-    if ($Force -and -not $Confirm){
+    if (-not(Test-Path variable:Confirm)) {
+        $Confirm = $false
+    }
+
+    if ($Force -and -not $Confirm) {
         $ConfirmPreference = 'None'
     }
 
