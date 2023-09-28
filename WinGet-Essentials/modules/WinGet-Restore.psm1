@@ -361,6 +361,7 @@ function Install-WinGetSoftware
         Write-Verbose "returned: $exitCode"
     }
 
+    if (-not($installOk)) { $ErrorCount.Value++ }
     if (-not($runPostInstall)) { continue }
 
     if ($installOk) {
@@ -379,7 +380,6 @@ function Install-WinGetSoftware
             $runPostInstall = $runPostInstall -and ($decision -eq 0)
         } else {
             $runPostInstall = $runPostInstall -and ($Package.PostInstall.Run -eq "Always")
-            $ErrorCount.Value++
         }
     }
 
