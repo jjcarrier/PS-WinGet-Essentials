@@ -281,7 +281,7 @@ function Restore-WinGetSoftware
     }
 
     if ($errorCount -gt 0) {
-        throw "Done (Errors = $errorCount)."
+        Write-Error "Done (Errors = $errorCount)."
     } else {
         Write-Output "Done."
     }

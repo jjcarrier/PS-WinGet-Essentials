@@ -530,7 +530,7 @@ function Update-WinGetSoftware
     }
 
     if ($ErrorCount -gt 0) {
-        throw "Done (Errors = $ErrorCount)."
+        Write-Error "Done (Errors = $ErrorCount)."
     } else {
         Write-Output 'Done.'
     }
