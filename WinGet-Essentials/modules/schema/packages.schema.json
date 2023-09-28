@@ -21,6 +21,22 @@
                     "type": "string"
                 }
             },
+            "Location": {
+                "type": "string",
+                "description": "The install location to provide to 'supported' installers."
+            },
+            "Version": {
+                "type": "string",
+                "description": "The version of the package to install. The latest version will be used when not specified."
+            },
+            "VersionLock": {
+                "type": "boolean",
+                "description": "When set, the specified 'Version' will always be used even when the user specifies the 'UseLatest' option."
+            },
+            "AdditionalArgs": {
+                "type": "string",
+                "description": "A string containing arguments to be passed as-is to the issued WinGet command. This is intended to provide users with access to WinGet options that have not been explicitly specified in the JSON schema of this utility."
+            },
             "PostInstall": {
                 "type": "object",
                 "required": [

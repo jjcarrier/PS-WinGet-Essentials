@@ -54,6 +54,12 @@ function Restore-WinGetSoftware
         [Parameter()]
         [switch]$UseUI,
 
+        # When set, ignore the 'Version' of all packages to be installed and use
+        # the latest version available. However, packages with 'VersionLock' set
+        # will be respected.
+        [Parameter()]
+        [switch]$UseLatest,
+
         # When set, indicates that interactive installation should be used,
         # requires user to navigate install wizards.
         [Parameter()]
@@ -232,7 +238,7 @@ function Restore-WinGetSoftware
             EnterKeyDescription = "Press ENTER to show selection details.                      "
             EnterKeyScript = $ShowPackageDetailsScriptBlock
             DefaultMemberToShow = "PackageIdentifier"
-            SelectedItemMembersToShow = @("PackageIdentifier","Tags")
+            SelectedItemMembersToShow = @("PackageIdentifier","Tags", "Version", "Location")
             Selections = ([ref]$selections)
         }
 
@@ -259,11 +265,12 @@ function Restore-WinGetSoftware
     {
         Write-ProgressHelper -Packages $selectedPackages -PackageIndex $packageIndex
 
+        Write-Verbose "command: winget install$(Get-WinGetSoftwareInstallArgs -Package $installPackage -UseLatest:$UseLatest)"
         if ($PSCmdlet.ShouldProcess($installPackage.PackageIdentifier)) {
             Install-WinGetSoftware -Package $installPackage -ErrorCount ([ref]$errorCount)
-        } else {
-            Write-Output "Skipped."
         }
+
+        Write-Output ""
 
         $packageIndex++
     }
@@ -273,6 +280,52 @@ function Restore-WinGetSoftware
     } else {
         Write-Output "Done."
     }
+}
+
+function Test-ObjectPropertyExists
+{
+    param (
+        [object]$Object,
+        [string]$PropertyName
+    )
+    $PropertyName -in $Object.PSobject.Properties.Name
+}
+
+function Get-WinGetSoftwareInstallArgs
+{
+    param(
+        [object]$Package,
+        [switch]$UseLatest
+    )
+
+    if ($Interactive -or ((Test-ObjectPropertyExists -Object $Package -Property "Interactive") -and $Package.Interactive)) {
+        $InteractiveArg = " --interactive"
+    } else {
+        $InteractiveArg = ""
+    }
+
+    $PackageIdArg = " --id $($Package.PackageIdentifier)"
+
+    if ((((Test-ObjectPropertyExists -Object $Package -Property "VersionLock") -and $Package.VersionLock) -or -not($UseLatest)) -and
+        (Test-ObjectPropertyExists -Object $Package -Property "Version") -and -not([string]::IsNullOrWhiteSpace($Package.Version))) {
+        $VersionArg = " --version $($Package.Version)"
+    } else {
+        $VersionArg = ""
+    }
+
+    if ((Test-ObjectPropertyExists -Object $Package -Property "Location") -and -not([string]::IsNullOrWhiteSpace($Package.Location))) {
+        $LocationArg = " --location '$($Package.Location)'"
+    } else {
+        $LocationArg = ""
+    }
+
+    if ((Test-ObjectPropertyExists -Object $Package -Property "AdditionalArgs") -and -not([string]::IsNullOrWhiteSpace($Package.AdditionalArgs))) {
+        $AdditionalArgs = " $($Package.AdditionalArgs)"
+    } else {
+        $AdditionalArgs = ""
+    }
+
+    return "$InteractiveArg$PackageIdArg$VersionArg$LocationArg$AdditionalArgs"
 }
 
 function Install-WinGetSoftware
@@ -289,14 +342,13 @@ function Install-WinGetSoftware
     )
 
     $runPostInstall = ($Package.PSobject.Properties.Name -contains "PostInstall")
+    $installArgs = $(Get-WinGetSoftwareInstallArgs -Package $Package -UseLatest:$UseLatest).Split()
+    Invoke-Expression "winget install $installArgs"
 
-    if ($Interactive) {
-        winget install --id $Package.PackageIdentifier --interactive
-    } else {
-        winget install --id $Package.PackageIdentifier
-    }
+    $exitCode = $LASTEXITCODE
+    $installOk = $exitCode -eq 0
 
-    $installOk = $?
+    Write-Verbose "returned: $exitCode"
 
     if (-not($runPostInstall)) { continue }
 
