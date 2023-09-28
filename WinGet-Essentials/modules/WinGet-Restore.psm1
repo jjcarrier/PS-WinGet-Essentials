@@ -5,6 +5,7 @@ Import-Module "$PSScriptRoot\WinGet-Utils.psm1"
 [string]$PackageDatabase = "$PSScriptRoot\winget.packages.json"
 [string]$PackageDatabaseSchema = "$PSScriptRoot\schema\packages.schema.json"
 [string]$CheckpointFilePath = "$PSScriptRoot\winget.{HOSTNAME}.checkpoint"
+[string]$FakePackageExpression = "fake.package.*"
 
 <#
 .DESCRIPTION
@@ -346,13 +347,19 @@ function Install-WinGetSoftware
     )
 
     $runPostInstall = ($Package.PSobject.Properties.Name -contains "PostInstall")
-    $installArgs = $(Get-WinGetSoftwareInstallArgs -Package $Package -UseLatest:$UseLatest).Split()
-    Invoke-Expression "winget install $installArgs"
 
-    $exitCode = $LASTEXITCODE
-    $installOk = $exitCode -eq 0
+    $fakePackage = ($Package.PackageIdentifier -like $FakePackageExpression)
+    if ($fakePackage) {
+        Write-Output "Fake Package. Post-Install only."
+        $installOk = $true
+    } else {
+        $installArgs = $(Get-WinGetSoftwareInstallArgs -Package $Package -UseLatest:$UseLatest).Split()
+        Invoke-Expression "winget install $installArgs"
 
-    Write-Verbose "returned: $exitCode"
+        $exitCode = $LASTEXITCODE
+        $installOk = $exitCode -eq 0
+        Write-Verbose "returned: $exitCode"
+    }
 
     if (-not($runPostInstall)) { continue }
 
