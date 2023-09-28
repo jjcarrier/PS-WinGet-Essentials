@@ -310,12 +310,51 @@ function Update-WinGetSoftware
         return $decision
     }
 
+    function Remove-UpgradeItemFromCache
+    {
+        param (
+            # The upgrade item to remove from cache.
+            [PSCustomObject]$Item
+        )
+
+        $cacheFile = $CacheFilePath.Replace('{HOSTNAME}', $(hostname).ToLower())
+
+        if (-not(Test-Path $cacheFile)) {
+            return
+        }
+
+        $cache = Get-Content $cacheFile | ConvertFrom-Json
+        $upgrades = $cache.upgrades | Where-Object {
+            $_.Id -ne $Item.Id
+        }
+
+        # Note: currently the hash depends only on the ignore file and winget's
+        # raw response data for the upgrade list, so there is no need to
+        # recompute the hash for this operation. However, because there are
+        # several complications with detecting whether an update completed
+        # successfully, it makes sense to simply invalidate the hash to
+        # force a refresh after the user updated packages.
+        $cache = [PSCustomObject]@{
+            hash = "0"
+            upgrades = $upgrades
+        }
+        $cache | ConvertTo-Json | Set-Content $cacheFile
+    }
+
     function Update-Software
     {
-        [CmdletBinding()]
         param (
+            # The item containing the package to update along with its metadata.
             [PSCustomObject]$Item,
-            [switch]$Interactive
+
+            # Provide user-interactive installation for the specified package.
+            [switch]$Interactive,
+
+            # Set true when software installed successfully (note, some packages
+            # will not report success for various reasons even when the
+            # software did not encounter an error during the update. One example
+            # of this is when a package requires a reboot to complete.
+            [ref]$Success
         )
 
         # From https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerSharedLib/Public/AppInstallerErrors.h
@@ -324,32 +363,31 @@ function Update-WinGetSoftware
         Write-Output "Updating '$($Item.Id)'..."
 
         if ($Interactive) {
-            winget upgrade --id $item.Id --interactive
+            $InteractiveArg = " --interactive"
         } else {
-            winget upgrade --id $item.Id
+            $InteractiveArg = ""
         }
 
-        if (-not($?) -and ($LastExitCode -eq $UPDATE_NOT_APPLICABLE))
-        {
+        winget upgrade --id $Item.Id$InteractiveArg
+
+        if (-not($?) -and ($LastExitCode -eq $UPDATE_NOT_APPLICABLE)) {
             # This is a workaround for an issue currently present in winget where
             # the listing reports an update, but it is not possible to 'upgrade'.
             # Instead, use the 'install' command. This issue might be caused by
             # different install wizard on the local system versus what is
             # present on the winget source.
-            if ($Interactive) {
-                winget install --id $item.Id --interactive
-            } else {
-                winget install --id $item.Id
-            }
+            winget install --id $Item.Id$InteractiveArg
         }
 
         # Ignore exit code 3010 (seems to indicate "restart required")?
-        if (Test-LastCommandResult)
-        {
-            # TODO remove entry from cache and be sure to refresh the hash.
+        if (Test-LastCommandResult) {
             Write-Output "`nUpdated '$($Item.Id)'"
             Write-Verbose "`tOld Version: [$($Item.Version)]"
             Write-Verbose "`tNew Version: [$($Item.Available)]"
+            Write-Output ""
+            $Success.Value = $true
+        } else {
+            $Success.Value = $false
         }
     }
 
@@ -480,7 +518,11 @@ function Update-WinGetSoftware
             }
 
             if ($PSCmdlet.ShouldProcess($upgradeItem.Id)) {
-                Update-Software $upgradeItem -Interactive:$Interactive
+                $upgraded = $false
+                Update-Software $upgradeItem -Interactive:$Interactive -Success ([ref]$upgraded)
+                if ($upgraded) {
+                    Remove-UpgradeItemFromCache -Item $upgradeItem
+                }
             }
 
             $upgradeIndex++
