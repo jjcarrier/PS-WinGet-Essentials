@@ -385,6 +385,7 @@ function Install-WinGetSoftware
 
     if (-not($runPostInstall)) { continue }
 
+    $terminatePostInstall = $false
     foreach ($cmd in $Package.PostInstall.Commands) {
         $runCommand = $true
         while ($runCommand) {
@@ -403,6 +404,7 @@ function Install-WinGetSoftware
             if ($errorReult) {
                 $ErrorCount.Value++
                 if ($Package.PostInstall.OnError -eq "Skip") {
+                    $terminatePostInstall = $true
                     break
                 } elseif ($Package.PostInstall.OnError -eq "Prompt") {
                     $title = "An error occurred during the last post-install command"
@@ -420,6 +422,10 @@ function Install-WinGetSoftware
                     # "Continue", do nothing.
                 }
             }
+        }
+
+        if ($terminatePostInstall) {
+            break;
         }
     }
 }
