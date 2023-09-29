@@ -52,3 +52,8 @@ jobs:
           if (-not($?)) {
               Write-Error "Manifest validation failed." -ErrorAction Stop
           }
+
+      - name: Test Module
+        shell: pwsh
+        run: |
+          Invoke-Pester
