@@ -72,7 +72,12 @@ function Restore-WinGetSoftware
 
         # Launches and runs the invoked command in an administrator instance of PowerShell.
         [Parameter()]
-        [switch]$Administrator
+        [switch]$Administrator,
+
+        # Bypasses schema validation for the "winget.packages.json". This is
+        # for testing purposes and should not be used in normal usage.
+        [Parameter()]
+        [switch]$SkipValidation
     )
 
     function Write-ProgressHelper
@@ -179,7 +184,7 @@ function Restore-WinGetSoftware
         $isMatch = $MatchAllScriptBlock
     }
 
-    if (-not(Test-Json -Json ([string](Get-Content $PackageDatabase)) -SchemaFile $PackageDatabaseSchema)) {
+    if (-not($SkipValidation) -and -not(Test-Json -Json (Get-Content $PackageDatabase | Out-String) -SchemaFile $PackageDatabaseSchema)) {
         Write-Error "Schema validation failed for: '$PackageDatabase'. Please fix and try again. The file can be validated against '$PackageDatabaseSchema'."
         return
     }
