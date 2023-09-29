@@ -13,8 +13,8 @@ function Build-RequiredModuleFiles {
         foreach ($module in $requiredModules) {
             $moduleName = $module.ModuleName
             New-Item $moduleName -type Directory
-            Write-Output "Creating empty .psd1 file for module $modulename at $((Get-Location).Path)\$moduleName\$moduleName.psd1"
-            New-Item ".\$moduleName\$moduleName.psd1"
+            Write-Output "Creating fake .psd1 file for module $modulename at $((Get-Location).Path)\$moduleName\$moduleName.psd1"
+            New-ModuleManifest ".\$moduleName\$moduleName.psd1"
         }
 
         Pop-Location
