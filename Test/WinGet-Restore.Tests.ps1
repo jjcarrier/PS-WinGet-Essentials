@@ -1,5 +1,14 @@
 # Basic tests for validating command options
 
+# Check if winget is available, if not, skip test(s) that require it to be called.
+try {
+    $wingetCommand = Get-Command -CommandType Application winget
+    $SkipNoWinGet = ($null -eq $wingetCommand)
+}
+catch {
+    $SkipNoWinGet = $true
+}
+
 BeforeAll {
     Copy-Item -Path "$PSScriptRoot\test.packages.json" -Destination "$PSScriptRoot\..\WinGet-Essentials\modules\winget.packages.json"
     Copy-Item -Path "$PSScriptRoot\test.checkpoint" -Destination "$PSScriptRoot\..\WinGet-Essentials\modules\winget.$((hostname).ToLower()).checkpoint"
@@ -99,7 +108,7 @@ Describe 'Restore-WinGetSoftware' {
 }
 
 Describe 'Restore-WinGetSoftware' {
-    It "always runs PostInstall commands when PostInstall.Run is set to 'Always'" {
+    It -Skip:$SkipNoWinGet "always runs PostInstall commands when PostInstall.Run is set to 'Always'" {
         $verboseLog = Restore-WinGetSoftware -Tag "always_run_post_install" -Verbose -Force -ErrorVariable errorLog -ErrorAction SilentlyContinue 4>&1
         $errorLog | Should -Be "Done (Errors = 1)."
         $verboseLog = [string[]]@($verboseLog | Where-Object { $_ -like "Executing:*" })
