@@ -1,6 +1,7 @@
 # WinGet-Essentials PowerShell Module
 
 ![PSGallery](https://img.shields.io/powershellgallery/p/WinGet-Essentials)
+[![CI](https://github.com/jjcarrier/WinGet-Essentials/actions/workflows/ci.yml/badge.svg)](https://github.com/jjcarrier/WinGet-Essentials/actions/workflows/ci.yml)
 
 ## [Table of Contents](#table-of-contents)
 
