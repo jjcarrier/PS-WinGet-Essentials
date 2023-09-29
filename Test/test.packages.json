@@ -1,0 +1,79 @@
+[
+    {
+      "PackageIdentifier": "basic_package_installed",
+      "Tags": [
+        "tag_all",
+        "tag_once",
+        "tag_twice"
+      ]
+    },
+    {
+      "PackageIdentifier": "basic_package",
+      "Tags": [
+        "tag_all",
+        "tag_once_again",
+        "tag_twice"
+      ]
+    },
+    {
+      "PackageIdentifier": "package_with_version",
+      "Version": "1.0.0",
+      "Tags": [
+        "tag_all",
+        "package_with_version"
+      ]
+    },
+    {
+      "PackageIdentifier": "package_with_version_lock",
+      "Version": "1.0.0",
+      "VersionLock": true,
+      "Tags": [
+        "tag_all",
+        "package_with_version_lock"
+      ]
+    },
+    {
+      "PackageIdentifier": "package_with_interactive",
+      "Interactive": true,
+      "Tags": [
+        "tag_all",
+        "package_with_interactive"
+      ]
+    },
+    {
+      "PackageIdentifier": "this.package.should.not.exist",
+      "Tags": [
+        "tag_all",
+        "always_run_post_install"
+      ],
+      "PostInstall": {
+        "Commands": ["Write-Output \"First Command\"", "Write-Output \"Second Command\""],
+        "Run": "Always",
+        "OnError": "Continue"
+      }
+    },
+    {
+      "PackageIdentifier": "fake.package.1",
+      "Tags": [
+        "tag_all",
+        "continue_post_install_commands_on_error"
+      ],
+      "PostInstall": {
+        "Commands": ["Write-Output \"First Command\"", "Write-Error \"Second Command\"", "Write-Output \"Third Command\""],
+        "Run": "OnSuccess",
+        "OnError": "Continue"
+      }
+    },
+    {
+      "PackageIdentifier": "fake.package.2",
+      "Tags": [
+        "tag_all",
+        "skip_post_install_commands_on_error"
+      ],
+      "PostInstall": {
+        "Commands": ["Write-Output \"First Command\"", "Write-Error \"Second Command\"", "Write-Output \"Third Command\""],
+        "Run": "OnSuccess",
+        "OnError": "Skip"
+      }
+    }
+  ]

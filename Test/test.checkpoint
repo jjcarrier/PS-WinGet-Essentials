@@ -1,0 +1,29 @@
+{
+	"$schema" : "https://aka.ms/winget-packages.schema.2.0.json",
+	"CreationDate" : "2023-09-28T10:38:13.166-00:00",
+	"Sources" :
+	[
+		{
+			"Packages" :
+			[
+				{
+					"PackageIdentifier" : "basic_package_installed",
+					"Version" : "1.0.0"
+				},
+				{
+					"PackageIdentifier" : "package_with_version",
+					"Version" : "1.0.1"
+				}
+			],
+			"SourceDetails" :
+			{
+				"Argument" : "https://cdn.winget.microsoft.com/cache",
+				"Identifier" : "Microsoft.Winget.Source_8wekyb3d8bbwe",
+				"Name" : "winget",
+				"Type" : "Microsoft.PreIndexed.Package"
+			}
+
+		}
+	],
+	"WinGetVersion" : "test"
+}
