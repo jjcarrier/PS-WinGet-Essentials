@@ -5,10 +5,16 @@ function Build-RequiredModuleFiles {
     if ($requiredModules) {
         Push-Location
         if ($IsWindows) {
-            Set-Location "$env:USERPROFILE/Documents/PowerShell/Modules"
+            $modulesPath = "$env:USERPROFILE/Documents/PowerShell/Modules"
         } else {
-            Set-Location '~/.local/share/powershell/Modules'
+            $modulesPath = '~/.local/share/powershell/Modules'
         }
+
+        if (-not(Test-Path -PathType Container $modulesPath)) {
+            New-Item -ItemType Directory $modulesPath
+        }
+
+        Set-Location $modulesPath
 
         foreach ($module in $requiredModules) {
             $moduleName = $module.ModuleName
