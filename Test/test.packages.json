@@ -53,7 +53,7 @@
       }
     },
     {
-      "PackageIdentifier": "fake.package.1",
+      "PackageIdentifier": "<fake.package.1>",
       "Tags": [
         "tag_all",
         "continue_post_install_commands_on_error"
@@ -65,7 +65,7 @@
       }
     },
     {
-      "PackageIdentifier": "fake.package.2",
+      "PackageIdentifier": "<fake.package.2>",
       "Tags": [
         "tag_all",
         "skip_post_install_commands_on_error"

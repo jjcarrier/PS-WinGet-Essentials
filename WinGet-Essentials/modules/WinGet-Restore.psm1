@@ -5,7 +5,7 @@ Import-Module "$PSScriptRoot\WinGet-Utils.psm1"
 [string]$PackageDatabase = "$PSScriptRoot\winget.packages.json"
 [string]$PackageDatabaseSchema = "$PSScriptRoot\schema\packages.schema.json"
 [string]$CheckpointFilePath = "$PSScriptRoot\winget.{HOSTNAME}.checkpoint"
-[string]$FakePackageExpression = "fake.package.*"
+[string]$FakePackageExpression = "<.*>"
 
 <#
 .DESCRIPTION
@@ -223,16 +223,26 @@ function Restore-WinGetSoftware
         return
     }
 
-    $installPackages = $installPackages | Sort-Object -Property PackageIdentifier
+    $fakePackages = $installPackages | Where-Object { $_.PackageIdentifier -match $FakePackageExpression } | Sort-Object -Property PackageIdentifier
+    $installPackages = $installPackages | Where-Object { $_.PackageIdentifier -notmatch $FakePackageExpression } | Sort-Object -Property PackageIdentifier
+
+    if ($null -ne $fakePackages) {
+        $installPackages = $installPackages + $fakePackages
+    }
 
     if ($UseUI) {
         $selections = [bool[]]@()
 
         $ShowPackageDetailsScriptBlock = {
             param($currentSelections, $selectedIndex)
+            $fakePackage = $installPackages[$selectedIndex].PackageIdentifier -match $FakePackageExpression
             $command = "winget show $($installPackages[$selectedIndex].PackageIdentifier)"
             Clear-Host
-            Invoke-Expression $command
+            if ($fakePackage) {
+                Write-Output "The selected package is not part of winget and only executes post-install comamnds."
+            } else {
+                Invoke-Expression $command
+            }
             Write-Output "`n[Press ENTER to return.]"
             [Console]::CursorVisible = $false
             $cursorPos = $host.UI.RawUI.CursorPosition
@@ -275,7 +285,13 @@ function Restore-WinGetSoftware
     {
         Write-ProgressHelper -Packages $selectedPackages -PackageIndex $packageIndex
 
-        Write-Verbose "command: winget install$(Get-WinGetSoftwareInstallArgs -Package $installPackage -UseLatest:$UseLatest)"
+        $fakePackage = ($installPackage.PackageIdentifier -match $FakePackageExpression)
+        if ($fakePackage) {
+            Write-Verbose "command: (post-install only)"
+        } else {
+            Write-Verbose "command: winget install$(Get-WinGetSoftwareInstallArgs -Package $installPackage -UseLatest:$UseLatest)"
+        }
+
         if ($PSCmdlet.ShouldProcess($installPackage.PackageIdentifier)) {
             Install-WinGetSoftware -Package $installPackage -ErrorCount ([ref]$errorCount)
         }
@@ -353,9 +369,8 @@ function Install-WinGetSoftware
 
     $runPostInstall = ($Package.PSobject.Properties.Name -contains "PostInstall")
 
-    $fakePackage = ($Package.PackageIdentifier -like $FakePackageExpression)
+    $fakePackage = $Package.PackageIdentifier -match $FakePackageExpression
     if ($fakePackage) {
-        Write-Output "Fake Package. Post-Install only."
         $installOk = $true
     } else {
         $installArgs = $(Get-WinGetSoftwareInstallArgs -Package $Package -UseLatest:$UseLatest).Split()
@@ -390,12 +405,14 @@ function Install-WinGetSoftware
 
     if (-not($runPostInstall)) { continue }
 
+    Write-Output "Post-install: running ..."
+
     $terminatePostInstall = $false
     foreach ($cmd in $Package.PostInstall.Commands) {
         $runCommand = $true
         while ($runCommand) {
             $runCommand = $false
-            Write-Output "Executing: '$cmd'"
+            Write-Verbose "executing: '$cmd'"
             $errorReult = $false
             try {
                 $global:LASTEXITCODE = 0
@@ -433,6 +450,8 @@ function Install-WinGetSoftware
             break;
         }
     }
+
+    Write-Output "Post-install: complete."
 }
 
 $RestoreTagScriptBlock = {
