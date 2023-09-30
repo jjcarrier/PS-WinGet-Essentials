@@ -38,7 +38,7 @@ the following primary functionality:
 
 ## [Installation](#table-of-contents)
 
-Download/install the module from `PSGallery`:
+Download/install the module from [PSGallery](https://www.powershellgallery.com/packages/WinGet-Essentials):
 
 ```pwsh
 Install-Module -Name WinGet-Essentials -Repository PSGallery
@@ -290,11 +290,28 @@ interest. It should, at a minimum, have the following form:
 ]
 ```
 
-When editing this file, a user may use the available schema-file for assistance
-and validation. The following entry may be added (replacing `<PATH_TO_MODULE>`
-with the location to the installed `WinGet-Essentials` module) to a VS Code's
-user/workspace settings (assuming the file is given the default name of
-`winget.packages.json`):
+### Optional JSON keys
+
+Each entry above may specify various optional key-values which include:
+
+* Install Location
+* Package Version
+  * Both weak and strong version locking, via the `VersionLock` key
+* Additional Arguments
+  * Arguments may be passed directly to `winget` to expose all other command
+    options that have not been specifically supported by this JSON format.
+* Post-installation commands
+  * Supports execution with various control options (error handling/prompts).
+
+Further details available in [packages.schema.json](WinGet-Essentials/modules/schema/packages.schema.json)
+
+### JSON validation
+
+When editing the `winget.packages.json` file, a user may use the available
+schema-file for assistance and validation. The following entry may be added
+(replacing `<PATH_TO_MODULE>` with the location to the installed
+`WinGet-Essentials` module) to a VS Code's user/workspace settings (assuming the
+file is given the default name of `winget.packages.json`):
 
 ```json
 "json.schemas": [
