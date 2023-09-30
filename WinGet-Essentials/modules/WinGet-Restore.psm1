@@ -258,7 +258,7 @@ function Restore-WinGetSoftware
             EnterKeyDescription = "Press ENTER to show selection details.                      "
             EnterKeyScript = $ShowPackageDetailsScriptBlock
             DefaultMemberToShow = "PackageIdentifier"
-            SelectedItemMembersToShow = @("PackageIdentifier","Tags", "Version", "Location")
+            SelectedItemMembersToShow = @("PackageIdentifier", "Tags", "Version", "Location", "Interactive")
             Selections = ([ref]$selections)
         }
 
