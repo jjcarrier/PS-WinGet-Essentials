@@ -236,12 +236,17 @@ function Restore-WinGetSoftware
         $ShowPackageDetailsScriptBlock = {
             param($currentSelections, $selectedIndex)
             $fakePackage = $installPackages[$selectedIndex].PackageIdentifier -match $FakePackageExpression
+            $hasPostInstall = $installPackages[$selectedIndex].PSobject.Properties.Name -contains "PostInstall"
             $command = "winget show $($installPackages[$selectedIndex].PackageIdentifier)"
             Clear-Host
             if ($fakePackage) {
                 Write-Output "The selected package is not part of winget and only executes post-install comamnds."
             } else {
                 Invoke-Expression $command
+            }
+            if ($hasPostInstall) {
+                Write-Output "`nPost-Install Commands:"
+                $installPackages[$selectedIndex].PostInstall.Commands | ForEach-Object { Write-Output "`t$_" }
             }
             Write-Output "`n[Press ENTER to return.]"
             [Console]::CursorVisible = $false
