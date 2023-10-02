@@ -4,7 +4,6 @@ Import-Module "$PSScriptRoot\WinGet-Utils.psm1"
 
 # Used for specifing the default choice when prompting the user.
 [int]$DefaultChoiceYes = 0
-[int]$DefaultChoiceNo = 1
 
 [string]$SourceFilter = "--source winget"
 [string]$CacheFilePath = "$PSScriptRoot/winget.{HOSTNAME}.cache"
@@ -37,7 +36,7 @@ function Get-ListHash
 .OUTPUTS
     An array of objects containing the available upgrades.
 #>
-function Get-WinGetSoftwareUpgrades
+function Get-WinGetSoftwareUpgrade
 {
     param (
         [switch]$Detruncate,
@@ -312,7 +311,7 @@ function Update-WinGetSoftware
         )
 
         $choices  = '&Yes', '&No'
-        $decision = Request-Choice $Question $choices $DefaultChoiceIndex
+        $decision = Request-Choice -Question $Question -Choices $choices -DefaultChoiceIndex $DefaultChoiceIndex
         return ($decision -eq $DefaultChoiceYes)
     }
 
@@ -534,7 +533,7 @@ function Update-WinGetSoftware
     if ($Sync)
     {
         winget source update
-        $upgradeTable = Get-WinGetSoftwareUpgrades -UseIgnores -Detruncate
+        $upgradeTable = Get-WinGetSoftwareUpgrade -UseIgnores -Detruncate
         if ($upgradeTable.Count -gt 0)
         {
             Write-Output "`nAvailable Upgrades:"
@@ -543,7 +542,7 @@ function Update-WinGetSoftware
         return
     }
     else {
-        $upgradeTable = Get-WinGetSoftwareUpgrades -UseIgnores -Detruncate
+        $upgradeTable = Get-WinGetSoftwareUpgrade -UseIgnores -Detruncate
     }
 
     if ($upgradeTable.Count -eq 0)

@@ -111,7 +111,7 @@ function Restore-WinGetSoftware
     if (-not(Test-Administrator) -and -not($Force)) {
         Write-Warning ('Some programs will not install correctly if WinGet is used without administrator rights. ' +
             'This is particularly true for zip-based installs which involve the creation of symbolic links to export the utility the WinGet "Links" path.')
-        Write-Host 'Press any key to continue ...'
+        Write-Output 'Press any key to continue ...'
         $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
     }
 
@@ -313,7 +313,7 @@ function Restore-WinGetSoftware
     }
 }
 
-function Test-ObjectPropertyExists
+function Test-ObjectProperty
 {
     param (
         [object]$Object,
@@ -329,7 +329,7 @@ function Get-WinGetSoftwareInstallArgs
         [switch]$UseLatest
     )
 
-    if ($Interactive -or ((Test-ObjectPropertyExists -Object $Package -Property "Interactive") -and $Package.Interactive)) {
+    if ($Interactive -or ((Test-ObjectProperty -Object $Package -Property "Interactive") -and $Package.Interactive)) {
         $InteractiveArg = " --interactive"
     } else {
         $InteractiveArg = ""
@@ -337,20 +337,20 @@ function Get-WinGetSoftwareInstallArgs
 
     $PackageIdArg = " --id $($Package.PackageIdentifier)"
 
-    if ((((Test-ObjectPropertyExists -Object $Package -Property "VersionLock") -and $Package.VersionLock) -or -not($UseLatest)) -and
-        (Test-ObjectPropertyExists -Object $Package -Property "Version") -and -not([string]::IsNullOrWhiteSpace($Package.Version))) {
+    if ((((Test-ObjectProperty -Object $Package -Property "VersionLock") -and $Package.VersionLock) -or -not($UseLatest)) -and
+        (Test-ObjectProperty -Object $Package -Property "Version") -and -not([string]::IsNullOrWhiteSpace($Package.Version))) {
         $VersionArg = " --version $($Package.Version)"
     } else {
         $VersionArg = ""
     }
 
-    if ((Test-ObjectPropertyExists -Object $Package -Property "Location") -and -not([string]::IsNullOrWhiteSpace($Package.Location))) {
+    if ((Test-ObjectProperty -Object $Package -Property "Location") -and -not([string]::IsNullOrWhiteSpace($Package.Location))) {
         $LocationArg = " --location '$($Package.Location)'"
     } else {
         $LocationArg = ""
     }
 
-    if ((Test-ObjectPropertyExists -Object $Package -Property "AdditionalArgs") -and -not([string]::IsNullOrWhiteSpace($Package.AdditionalArgs))) {
+    if ((Test-ObjectProperty -Object $Package -Property "AdditionalArgs") -and -not([string]::IsNullOrWhiteSpace($Package.AdditionalArgs))) {
         $AdditionalArgs = " $($Package.AdditionalArgs)"
     } else {
         $AdditionalArgs = ""
