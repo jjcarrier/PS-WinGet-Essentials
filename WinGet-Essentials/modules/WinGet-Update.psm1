@@ -160,7 +160,7 @@ function Resolve-WinGetSoftwareUpgrade
 #>
 function Update-WinGetSoftware
 {
-    [CmdletBinding(DefaultParameterSetName = "Quiet", SupportsShouldProcess, ConfirmImpact = 'High', PositionalBinding)]
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'High', PositionalBinding)]
     param (
         # The ID or list of IDs for software package(s) to update.
         [string[]]$Id,
