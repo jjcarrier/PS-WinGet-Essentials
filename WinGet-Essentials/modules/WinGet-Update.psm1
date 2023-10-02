@@ -347,6 +347,31 @@ function Update-WinGetSoftware
 
     <#
     .DESCRIPTION
+        Get the caches item for the specified package identifier.
+    #>
+    function Get-ItemFromCache
+    {
+        param(
+            # Package Identifier to get the cache entry.
+            [string]$Id
+        )
+
+        $cacheFile = $CacheFilePath.Replace('{HOSTNAME}', $(hostname).ToLower())
+
+        if (-not(Test-Path $cacheFile)) {
+            return $null
+        }
+
+        $cache = Get-Content $cacheFile | ConvertFrom-Json
+        $cachedItem = $cache.upgrades | Where-Object {
+            $_.Id -eq $Id
+        }
+
+        return $cachedItem
+    }
+
+    <#
+    .DESCRIPTION
         Removes and item from the upgrade cache.
     #>
     function Remove-UpgradeItemFromCache
@@ -483,14 +508,28 @@ function Update-WinGetSoftware
 
     if (-not([string]::IsNullOrWhiteSpace($Id)))
     {
+        $upgradeTable = @()
         $Id | ForEach-Object {
-            winget upgrade $_
-            if ($?) {
-                $cache = Get-Content $cacheFile | ConvertFrom-Json
-                $cache.upgrades = $cache.upgrades | Where-Object { $_.Id -ne $Id }
-                $cache.hash = 0
-                $cache | ConvertTo-Json | Set-Content $cacheFile
+            $upgradeItem = Get-ItemFromCache -Id $_
+            if ($null -eq $upgradeItem) {
+                Write-Warning "`"$_`" was not found in cache and will not be upgraded."
+            } else {
+                $upgradeTable += $upgradeItem
             }
+        }
+
+        #$ConfirmPreference = 'Low'
+        $upgradeIndex = 0
+        $upgradeTable | ForEach-Object {
+            Write-ProgressHelper -UpgradeTable $upgradeTable -UpgradeIndex $upgradeIndex
+            $upgradeIndex++
+            #if ($Force -or $PSCmdlet.ShouldProcess($_)) {
+                $upgraded = $false
+                Update-Software -Item $_ -Interactive:$Interactive -Success ([ref]$upgraded) -ErrorCount ([ref]$ErrorCount) -Force:$Force
+                if ($upgraded) {
+                    Remove-UpgradeItemFromCache -Item $_
+                }
+            #}
         }
         return
     }
