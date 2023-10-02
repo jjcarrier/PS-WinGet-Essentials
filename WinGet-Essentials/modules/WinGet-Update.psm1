@@ -257,12 +257,15 @@ function Update-WinGetSoftware
             [int]$Code
         )
 
-        Write-Warning "An error ($Code) occurred while executing the last step."
+        Write-Output ""
+        Write-Warning "An error (code: $Code) occurred while executing the last step."
 
         if (-not(Request-YesOrNo "Do you want to continue?" $DefaultChoiceYes))
         {
             throw "Aborted (Errors = $ErrorCount)."
         }
+
+        Write-Output ""
     }
 
     <#
