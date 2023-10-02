@@ -2,9 +2,6 @@
 Set-StrictMode -Version 3
 Import-Module "$PSScriptRoot\WinGet-Utils.psm1"
 
-[int]$ErrorCount = 0
-[int]$IndentLevel = 0
-
 # Used for specifing the default choice when prompting the user.
 [int]$DefaultChoiceYes = 0
 [int]$DefaultChoiceNo = 1
@@ -197,7 +194,12 @@ function Update-WinGetSoftware
     #>
     function Add-Indentation
     {
-        $script:IndentLevel++
+        param(
+            # The current indentation level which will be incremented.
+            [ref]$IndentLevel
+        )
+
+        $IndentLevel.Value++
     }
 
     <#
@@ -206,9 +208,14 @@ function Update-WinGetSoftware
     #>
     function Remove-Indentation
     {
+        param(
+            # The current indentation level which will be decremented.
+            [ref]$IndentLevel
+        )
+
         if ($IndentLevel -gt 0)
         {
-            $script:IndentLevel--
+            $IndentLevel.Value--
         }
     }
 
@@ -219,6 +226,9 @@ function Update-WinGetSoftware
     function Write-OutputIndented
     {
         param (
+            # The level of indentation to apply.
+            [int]$IndentLevel,
+
             # The message to display.
             [string]$Message
         )
@@ -235,12 +245,17 @@ function Update-WinGetSoftware
     #>
     function Test-LastCommandResult
     {
+        param(
+            # The current error count, on error, this value will be incremented.
+            [ref]$ErrorCount
+        )
+
         $result = $? -eq $true
 
         if (-not($result))
         {
-            $script:ErrorCount++
-            Request-ContinueOnError -Code $result
+            $ErrorCount.Value++
+            Request-ContinueOnError -Code $result -ErrorCount $ErrorCount.Value
         }
 
         return $result
@@ -254,7 +269,11 @@ function Update-WinGetSoftware
     function Request-ContinueOnError
     {
         param(
-            [int]$Code
+            # The error code.
+            [int]$Code,
+
+            # The current error count.
+            [int]$ErrorCount
         )
 
         Write-Output ""
@@ -365,7 +384,11 @@ function Update-WinGetSoftware
             # will not report success for various reasons even when the
             # software did not encounter an error during the update. One example
             # of this is when a package requires a reboot to complete.
-            [ref]$Success
+            [ref]$Success,
+
+            # The error count, tracks the number of errors encountered through
+            # the update process.
+            [ref]$ErrorCount
         )
 
         # From https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerSharedLib/Public/AppInstallerErrors.h
@@ -390,8 +413,8 @@ function Update-WinGetSoftware
             winget install --id $Item.Id$InteractiveArg
         }
 
-        # Ignore exit code 3010 (seems to indicate "restart required")?
-        if (Test-LastCommandResult) {
+        # TODO: Ignore exit code 3010 (seems to indicate "restart required")?
+        if (Test-LastCommandResult -ErrorCount $ErrorCount) {
             Write-Output "`nUpdated '$($Item.Id)'"
             Write-Verbose "`tOld Version: [$($Item.Version)]"
             Write-Verbose "`tNew Version: [$($Item.Available)]"
@@ -418,6 +441,9 @@ function Update-WinGetSoftware
         Write-Output "[ $i / $($UpgradeTable.Count) ] Upgrading '$($UpgradeTable[$UpgradeIndex].Name)'"
         Write-Output "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬`n"
     }
+
+    [int]$ErrorCount = 0
+    [int]$IndentLevel = 0
 
     if ($Administrator -and -not(Test-Administrator)) {
         $boundParamsString = $PSBoundParameters.Keys | ForEach-Object {
@@ -481,9 +507,9 @@ function Update-WinGetSoftware
         $upgradeTable = $upgradeTable | Sort-Object -Property Name
 
         Write-Output "Upgrading:"
-        Add-Indentation
-        $upgradeTable | ForEach-Object { Write-OutputIndented "- $($_.Name)" }
-        Remove-Indentation
+        Add-Indentation -IndentLevel ([ref]$IndentLevel)
+        $upgradeTable | ForEach-Object { Write-OutputIndented -IndentLevel $IndentLevel -Message "- $($_.Name)" }
+        Remove-Indentation -IndentLevel ([ref]$IndentLevel)
     }
     else
     {
@@ -534,7 +560,7 @@ function Update-WinGetSoftware
 
             if ($PSCmdlet.ShouldProcess($upgradeItem.Id)) {
                 $upgraded = $false
-                Update-Software $upgradeItem -Interactive:$Interactive -Success ([ref]$upgraded)
+                Update-Software $upgradeItem -Interactive:$Interactive -Success ([ref]$upgraded) -ErrorCount ([ref]$ErrorCount)
                 if ($upgraded) {
                     Remove-UpgradeItemFromCache -Item $upgradeItem
                 }
