@@ -264,7 +264,7 @@ function Update-WinGetSoftware
         if (-not($result))
         {
             $ErrorCount.Value++
-            Request-ContinueOnError -Code $result -ErrorCount $ErrorCount.Value -Force:$Force
+            Request-ContinueOnError -Code $LastExitCode -ErrorCount $ErrorCount.Value -Force:$Force
         }
 
         return $result
