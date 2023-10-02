@@ -252,11 +252,7 @@ function Update-WinGetSoftware
     {
         param(
             # The current error count, on error, this value will be incremented.
-            [ref]$ErrorCount,
-
-            # The force state as specified by the user. When set, it will bypass,
-            # prompts and continue on with execution.
-            [switch]$Force
+            [ref]$ErrorCount
         )
 
         $result = $? -eq $true
@@ -264,7 +260,6 @@ function Update-WinGetSoftware
         if (-not($result))
         {
             $ErrorCount.Value++
-            Request-ContinueOnError -Code $LastExitCode -ErrorCount $ErrorCount.Value -Force:$Force
         }
 
         return $result
@@ -463,6 +458,7 @@ function Update-WinGetSoftware
             Write-Output ""
             $Success.Value = $true
         } else {
+            Request-ContinueOnError -Code $LastExitCode -ErrorCount $ErrorCount.Value -Force:$Force
             $Success.Value = $false
         }
     }
