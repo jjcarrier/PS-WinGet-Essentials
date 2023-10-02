@@ -185,7 +185,12 @@ function Update-WinGetSoftware
         [switch]$Administrator,
 
         # Bypasses the ignore file.
-        [switch]$NoIgnore
+        [switch]$NoIgnore,
+
+        # Bypasses prompts. If a prior upgrade fails, the process will continue
+        # to the next. NOTE: This overrides -WhatIf however it does not disable
+        # the -Interactive switch.
+        [switch]$Force
     )
 
     <#
@@ -247,7 +252,11 @@ function Update-WinGetSoftware
     {
         param(
             # The current error count, on error, this value will be incremented.
-            [ref]$ErrorCount
+            [ref]$ErrorCount,
+
+            # The force state as specified by the user. When set, it will bypass,
+            # prompts and continue on with execution.
+            [switch]$Force
         )
 
         $result = $? -eq $true
@@ -255,7 +264,7 @@ function Update-WinGetSoftware
         if (-not($result))
         {
             $ErrorCount.Value++
-            Request-ContinueOnError -Code $result -ErrorCount $ErrorCount.Value
+            Request-ContinueOnError -Code $result -ErrorCount $ErrorCount.Value -Force:$Force
         }
 
         return $result
@@ -273,13 +282,17 @@ function Update-WinGetSoftware
             [int]$Code,
 
             # The current error count.
-            [int]$ErrorCount
+            [int]$ErrorCount,
+
+            # The force state as specified by the user. When set, it will bypass,
+            # prompts and continue on with execution.
+            [switch]$Force
         )
 
         Write-Output ""
         Write-Warning "An error (code: $Code) occurred while executing the last step."
 
-        if (-not(Request-YesOrNo "Do you want to continue?" $DefaultChoiceYes))
+        if (-not($Force) -and -not(Request-YesOrNo "Do you want to continue?" $DefaultChoiceYes))
         {
             throw "Aborted (Errors = $ErrorCount)."
         }
@@ -388,7 +401,11 @@ function Update-WinGetSoftware
 
             # The error count, tracks the number of errors encountered through
             # the update process.
-            [ref]$ErrorCount
+            [ref]$ErrorCount,
+
+            # The force state as specified by the user. When set, it will bypass,
+            # prompts and continue on with execution.
+            [switch]$Force
         )
 
         # From https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerSharedLib/Public/AppInstallerErrors.h
@@ -414,7 +431,7 @@ function Update-WinGetSoftware
         }
 
         # TODO: Ignore exit code 3010 (seems to indicate "restart required")?
-        if (Test-LastCommandResult -ErrorCount $ErrorCount) {
+        if (Test-LastCommandResult -ErrorCount $ErrorCount -Force:$Force) {
             Write-Output "`nUpdated '$($Item.Id)'"
             Write-Verbose "`tOld Version: [$($Item.Version)]"
             Write-Verbose "`tNew Version: [$($Item.Available)]"
@@ -558,9 +575,9 @@ function Update-WinGetSoftware
                 continue
             }
 
-            if ($PSCmdlet.ShouldProcess($upgradeItem.Id)) {
+            if ($Force -or $PSCmdlet.ShouldProcess($upgradeItem.Id)) {
                 $upgraded = $false
-                Update-Software $upgradeItem -Interactive:$Interactive -Success ([ref]$upgraded) -ErrorCount ([ref]$ErrorCount)
+                Update-Software $upgradeItem -Interactive:$Interactive -Success ([ref]$upgraded) -ErrorCount ([ref]$ErrorCount) -Force:$Force
                 if ($upgraded) {
                     Remove-UpgradeItemFromCache -Item $upgradeItem
                 }
