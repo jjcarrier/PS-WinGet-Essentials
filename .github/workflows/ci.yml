@@ -31,7 +31,7 @@ jobs:
       - name: Lint with PSScriptAnalyzer
         shell: pwsh
         run: |
-          Invoke-ScriptAnalyzer -Path "$env:MODULE_NAME/$env:MODULE_NAME.psm1" -Recurse -Outvariable issues
+          Invoke-ScriptAnalyzer -Path "$env:MODULE_NAME" -Recurse -Outvariable issues
           $errors   = $issues.Where({$_.Severity -eq 'Error'})
           $warnings = $issues.Where({$_.Severity -eq 'Warning'})
           if ($errors) {
