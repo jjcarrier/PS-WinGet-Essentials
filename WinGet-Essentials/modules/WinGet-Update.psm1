@@ -313,6 +313,10 @@ function Update-WinGetSoftware
         return $decision
     }
 
+    <#
+    .DESCRIPTION
+        Removes and item from the upgrade cache.
+    #>
     function Remove-UpgradeItemFromCache
     {
         param (
@@ -344,6 +348,10 @@ function Update-WinGetSoftware
         $cache | ConvertTo-Json | Set-Content $cacheFile
     }
 
+    <#
+    .DESCRIPTION
+        Updates the specified package.
+    #>
     function Update-Software
     {
         param (
@@ -394,6 +402,10 @@ function Update-WinGetSoftware
         }
     }
 
+    <#
+    .DESCRIPTION
+        Renders output to convey progress.
+    #>
     function Write-ProgressHelper
     {
         param (
