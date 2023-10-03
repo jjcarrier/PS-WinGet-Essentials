@@ -254,7 +254,7 @@ function Update-WinGetSoftware
             [ref]$ErrorCount
         )
 
-        $result = $? -eq $true
+        $result = $LASTEXITCODE -eq 0
 
         if (-not($result))
         {
@@ -438,15 +438,19 @@ function Update-WinGetSoftware
             $InteractiveArg = ""
         }
 
-        winget upgrade --id $Item.Id --version $Item.Available$InteractiveArg
+        $upgradeArgs = "--id $($Item.Id) --version $($Item.Available)$InteractiveArg"
+        Write-Verbose "command: winget upgrade $upgradeArgs"
+        Invoke-Expression "winget upgrade $upgradeArgs"
 
-        if (-not($?) -and ($LastExitCode -eq $UPDATE_NOT_APPLICABLE)) {
+        $upgradeOk = $LASTEXITCODE -eq 0
+
+        if (-not($upgradeOk) -and ($LASTEXITCODE -eq $UPDATE_NOT_APPLICABLE)) {
             # This is a workaround for an issue currently present in winget where
             # the listing reports an update, but it is not possible to 'upgrade'.
             # Instead, use the 'install' command. This issue might be caused by
             # different install wizard on the local system versus what is
             # present on the winget source.
-            winget install --id $Item.Id --version $Item.Available$InteractiveArg
+            Invoke-Expression "winget install $upgradeArgs"
         }
 
         # TODO: Ignore exit code 3010 (seems to indicate "restart required")?
