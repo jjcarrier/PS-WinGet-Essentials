@@ -381,9 +381,8 @@ function Install-WinGetSoftware
         $installArgs = $(Get-WinGetSoftwareInstallArgs -Package $Package -UseLatest:$UseLatest).Split()
         Invoke-Expression "winget install $installArgs"
 
-        $exitCode = $LASTEXITCODE
-        $installOk = $exitCode -eq 0
-        Write-Verbose "returned: $exitCode"
+        $installOk = $LASTEXITCODE -eq 0
+        Write-Verbose "returned: $LASTEXITCODE"
     }
 
     if (-not($installOk)) { $ErrorCount.Value++ }
