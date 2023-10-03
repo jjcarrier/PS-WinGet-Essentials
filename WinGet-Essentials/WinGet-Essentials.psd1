@@ -1,6 +1,6 @@
 @{
     RootModule = 'WinGet-Essentials.psm1'
-    ModuleVersion = '1.5.0'
+    ModuleVersion = '1.5.1'
     GUID = '2a2b6c24-d6cc-4d59-a456-e7ccd90afd03'
     Author = 'Jon Carrier'
     CompanyName = 'Unknown'
