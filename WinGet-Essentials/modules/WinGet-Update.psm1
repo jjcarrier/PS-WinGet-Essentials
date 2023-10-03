@@ -44,15 +44,15 @@ function Get-WinGetSoftwareUpgrade
         [switch]$CleanCache
     )
 
-    $consoleWidth = [console]::WindowWidth
-    [console]::WindowWidth = 512
+    $consoleWidth = [console]::BufferWidth
+    [console]::BufferWidth = [console]::LargestWindowWidth
     $command = "winget upgrade $SourceFilter"
 
     # NOTE: for better caching, this logic should sanitize the response. In some
     # cases winget will emit the progress bar which will prevent caching from
     # working when it should.
     $response = Invoke-Expression $command
-    [console]::WindowWidth = $consoleWidth
+    [console]::BufferWidth = $consoleWidth
     if ($NoIgnore) {
         $ignoredIds = @()
     } else {
