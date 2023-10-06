@@ -3,6 +3,7 @@ Import-Module "$PSScriptRoot\WinGet-Utils.psm1"
 
 [string]$CheckpointFilePath = "$PSScriptRoot\winget.{HOSTNAME}.checkpoint"
 [string]$PackageDatabase = "$PSScriptRoot\winget.packages.json"
+[string]$DefaultSource = 'winget'
 
 <#
 .DESCRIPTION
@@ -44,7 +45,7 @@ function Merge-WinGetRestore
     }
 
     $installedPackages = Get-Content $checkpointFile | ConvertFrom-Json
-    $installedPackages = @($installedPackages.Sources | Where-Object { $_.SourceDetails.Name -eq 'winget' }).Packages
+    $installedPackages = @($installedPackages.Sources | Where-Object { $_.SourceDetails.Name -eq $DefaultSource }).Packages
 
     if (-not(Test-Path $PackageDatabase)) {
         Write-Error "A 'winget.packages.json' is required to use this cmdlet. Please see Initialize-WinGetRestore."
@@ -77,9 +78,12 @@ function Merge-WinGetRestore
 
         $ShowPackageDetailsScriptBlock = {
             param($currentSelections, $selectedIndex)
-            $command = "winget show $($newPackages[$selectedIndex].PackageIdentifier)"
+            $commandArgs = @('show', $newPackages[$selectedIndex].PackageIdentifier)
+            if (-not([string]::IsNullOrWhiteSpace($DefaultSource))) {
+                $commandArgs += @('--source', $DefaultSource)
+            }
             Clear-Host
-            Invoke-Expression $command
+            winget $command
             Write-Output "`n[Press ENTER to return.]"
             [Console]::CursorVisible = $false
             $cursorPos = $host.UI.RawUI.CursorPosition

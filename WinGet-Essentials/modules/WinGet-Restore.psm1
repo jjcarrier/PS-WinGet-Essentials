@@ -6,6 +6,7 @@ Import-Module "$PSScriptRoot\WinGet-Utils.psm1"
 [string]$PackageDatabaseSchema = "$PSScriptRoot\schema\packages.schema.json"
 [string]$CheckpointFilePath = "$PSScriptRoot\winget.{HOSTNAME}.checkpoint"
 [string]$FakePackageExpression = "<.*>"
+[string]$DefaultSource = 'winget'
 
 <#
 .DESCRIPTION
@@ -237,12 +238,15 @@ function Restore-WinGetSoftware
             param($currentSelections, $selectedIndex)
             $fakePackage = $installPackages[$selectedIndex].PackageIdentifier -match $FakePackageExpression
             $hasPostInstall = $installPackages[$selectedIndex].PSobject.Properties.Name -contains "PostInstall"
-            $command = "winget show $($installPackages[$selectedIndex].PackageIdentifier)"
             Clear-Host
             if ($fakePackage) {
                 Write-Output "The selected package is not part of winget and only executes post-install comamnds."
             } else {
-                Invoke-Expression $command
+                $commandArgs = @('show', $installPackages[$selectedIndex].PackageIdentifier)
+                if (-not([string]::IsNullOrWhiteSpace($DefaultSource))) {
+                    $commandArgs += @('--source', $DefaultSource)
+                }
+                winget $commandArgs
             }
             if ($hasPostInstall) {
                 Write-Output "`nPost-Install Commands:"
@@ -330,33 +334,39 @@ function Get-WinGetSoftwareInstallArgs
     )
 
     if ($Interactive -or ((Test-ObjectProperty -Object $Package -Property "Interactive") -and $Package.Interactive)) {
-        $InteractiveArg = " --interactive"
+        $interactiveArg = ' --interactive'
     } else {
-        $InteractiveArg = ""
+        $interactiveArg = ''
     }
 
-    $PackageIdArg = " --id $($Package.PackageIdentifier)"
+    $packageIdArg = " --id $($Package.PackageIdentifier)"
+
+    if (-not([string]::IsNullOrWhiteSpace($DefaultSource))) {
+        $sourceArg = "--source $DefaultSource"
+    } else {
+        $sourceArg = ''
+    }
 
     if ((((Test-ObjectProperty -Object $Package -Property "VersionLock") -and $Package.VersionLock) -or -not($UseLatest)) -and
         (Test-ObjectProperty -Object $Package -Property "Version") -and -not([string]::IsNullOrWhiteSpace($Package.Version))) {
-        $VersionArg = " --version $($Package.Version)"
+        $versionArg = " --version $($Package.Version)"
     } else {
-        $VersionArg = ""
+        $versionArg = ''
     }
 
     if ((Test-ObjectProperty -Object $Package -Property "Location") -and -not([string]::IsNullOrWhiteSpace($Package.Location))) {
-        $LocationArg = " --location '$($Package.Location)'"
+        $locationArg = " --location '$($Package.Location)'"
     } else {
-        $LocationArg = ""
+        $locationArg = ''
     }
 
     if ((Test-ObjectProperty -Object $Package -Property "AdditionalArgs") -and -not([string]::IsNullOrWhiteSpace($Package.AdditionalArgs))) {
-        $AdditionalArgs = " $($Package.AdditionalArgs)"
+        $additionalArgs = " $($Package.AdditionalArgs)"
     } else {
-        $AdditionalArgs = ""
+        $additionalArgs = ''
     }
 
-    return "$InteractiveArg$PackageIdArg$VersionArg$LocationArg$AdditionalArgs"
+    return "$interactiveArg$packageIdArg$sourceArg$versionArg$locationArg$additionalArgs"
 }
 
 function Install-WinGetSoftware
@@ -378,7 +388,7 @@ function Install-WinGetSoftware
     if ($fakePackage) {
         $installOk = $true
     } else {
-        $installArgs = $(Get-WinGetSoftwareInstallArgs -Package $Package -UseLatest:$UseLatest).Split()
+        $installArgs = Get-WinGetSoftwareInstallArgs -Package $Package -UseLatest:$UseLatest
         Invoke-Expression "winget install $installArgs"
 
         $installOk = $LASTEXITCODE -eq 0

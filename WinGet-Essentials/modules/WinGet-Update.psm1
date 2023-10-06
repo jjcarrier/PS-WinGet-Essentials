@@ -5,7 +5,7 @@ Import-Module "$PSScriptRoot\WinGet-Utils.psm1"
 # Used for specifing the default choice when prompting the user.
 [int]$DefaultChoiceYes = 0
 
-[string]$SourceFilter = "--source winget"
+[string]$DefaultSource = 'winget'
 [string]$CacheFilePath = "$PSScriptRoot/winget.{HOSTNAME}.cache"
 
 # List of all apps that are available in a known source
@@ -46,12 +46,16 @@ function Get-WinGetSoftwareUpgrade
 
     $consoleWidth = [console]::BufferWidth
     [console]::BufferWidth = [console]::LargestWindowWidth
-    $command = "winget upgrade $SourceFilter"
+
+    $commandArgs = @('upgrade')
+    if (-not([string]::IsNullOrWhiteSpace($DefaultSource))) {
+        $commandArgs += @('--source', $DefaultSource)
+    }
 
     # NOTE: for better caching, this logic should sanitize the response. In some
     # cases winget will emit the progress bar which will prevent caching from
     # working when it should.
-    $response = Invoke-Expression $command
+    $response = winget $commandArgs
     [console]::BufferWidth = $consoleWidth
     if ($NoIgnore) {
         $ignoredIds = @()
@@ -134,7 +138,12 @@ function Resolve-WinGetSoftwareUpgrade
     process
     {
         if ($_.Name -like "*…" -or $_.Id -like "*…") {
-            $tmp = @(winget search --Id "$($_.Id.Replace('…',''))" | ConvertFrom-TextTable)
+            $commandArgs = @('search', '--id', "$($_.Id.Replace('…',''))")
+            if (-not([string]::IsNullOrWhiteSpace($DefaultSource))) {
+                $commandArgs += @('--source', $DefaultSource)
+            }
+
+            $tmp = @(winget $commandArgs | ConvertFrom-TextTable)
             if ($tmp.Count -ne 1) {
                 Write-Warning "Multiple entries for $($_.Id) returned. First entry selected."
             }
@@ -187,8 +196,8 @@ function Update-WinGetSoftware
         [switch]$NoIgnore,
 
         # Bypasses prompts. If a prior upgrade fails, the process will continue
-        # to the next. NOTE: This overrides -WhatIf however it does not disable
-        # the -Interactive switch.
+        # to the next. NOTE: This overrides -WhatIf and -Confirm; however, it
+        # does not disable the -Interactive switch.
         [switch]$Force
     )
 
@@ -401,6 +410,31 @@ function Update-WinGetSoftware
 
     <#
     .DESCRIPTION
+        Returns the arguments to be used for performing an update via WinGet.
+    #>
+    function Get-WinGetSoftwareUpdateArgs
+    {
+        param (
+            # The item containing the package to update along with its metadata.
+            [PSCustomObject]$Item,
+
+            # Provide user-interactive installation for the specified package.
+            [switch]$Interactive
+        )
+
+        $commandArgs = @('upgrade', '--id', $Item.Id, '--version', $Item.Available)
+        if (-not([string]::IsNullOrWhiteSpace($DefaultSource))) {
+            $commandArgs += @('--source', $DefaultSource)
+        }
+        if ($Interactive) {
+            $commandArgs += '--interactive'
+        }
+
+        return $commandArgs
+    }
+
+    <#
+    .DESCRIPTION
         Updates the specified package.
     #>
     function Update-Software
@@ -431,16 +465,7 @@ function Update-WinGetSoftware
         $UPDATE_NOT_APPLICABLE = 0x8A15002B
 
         Write-Output "Updating '$($Item.Id)'..."
-
-        if ($Interactive) {
-            $InteractiveArg = " --interactive"
-        } else {
-            $InteractiveArg = ""
-        }
-
-        $upgradeArgs = "--id $($Item.Id) --version $($Item.Available)$InteractiveArg"
-        Write-Verbose "command: winget upgrade $upgradeArgs"
-        Invoke-Expression "winget upgrade $upgradeArgs"
+        winget $(Get-WinGetSoftwareUpdateArgs -Item $Item -Interactive:$Interactive)
 
         $upgradeOk = $LASTEXITCODE -eq 0
 
@@ -450,7 +475,8 @@ function Update-WinGetSoftware
             # Instead, use the 'install' command. This issue might be caused by
             # different install wizard on the local system versus what is
             # present on the winget source.
-            Invoke-Expression "winget install $upgradeArgs"
+            $commandArgs[0] = 'install'
+            winget $commandArgs
         }
 
         # TODO: Ignore exit code 3010 (seems to indicate "restart required")?
@@ -517,18 +543,19 @@ function Update-WinGetSoftware
             }
         }
 
-        #$ConfirmPreference = 'Low'
+        $ConfirmPreference = 'None'
         $upgradeIndex = 0
         $upgradeTable | ForEach-Object {
             Write-ProgressHelper -UpgradeTable $upgradeTable -UpgradeIndex $upgradeIndex
             $upgradeIndex++
-            #if ($Force -or $PSCmdlet.ShouldProcess($_)) {
+            Write-Verbose "command: winget $(Get-WinGetSoftwareUpdateArgs -Item $_ -Interactive:$Interactive)"
+            if ($Force -or $PSCmdlet.ShouldProcess($_.Id)) {
                 $upgraded = $false
                 Update-Software -Item $_ -Interactive:$Interactive -Success ([ref]$upgraded) -ErrorCount ([ref]$ErrorCount) -Force:$Force
                 if ($upgraded) {
                     Remove-UpgradeItemFromCache -Item $_
                 }
-            #}
+            }
         }
         return
     }
@@ -536,7 +563,11 @@ function Update-WinGetSoftware
     Write-Output "Getting winget upgrades ..."
     if ($Sync)
     {
-        winget source update
+        $commandArgs = @('source', 'update')
+        if (-not([string]::IsNullOrWhiteSpace($DefaultSource))) {
+            $commandArgs += @('--name', $DefaultSource)
+        }
+        winget $commandArgs
         $upgradeTable = Get-WinGetSoftwareUpgrade -UseIgnores -Detruncate
         if ($upgradeTable.Count -gt 0)
         {
@@ -574,9 +605,12 @@ function Update-WinGetSoftware
 
         $ShowPackageDetailsScriptBlock = {
             param($currentSelections, $selectedIndex)
-            $command = "winget show $($upgradeTable[$selectedIndex].Id)"
+            $commandArgs = @('show', $upgradeTable[$selectedIndex].Id)
+            if (-not([string]::IsNullOrWhiteSpace($DefaultSource))) {
+                $commandArgs += @('--source', $DefaultSource)
+            }
             Clear-Host
-            Invoke-Expression $command
+            winget $commandArgs
             Write-Output "`n[Press ENTER to return.]"
             [Console]::CursorVisible = $false
             $cursorPos = $host.UI.RawUI.CursorPosition
@@ -613,6 +647,7 @@ function Update-WinGetSoftware
                 continue
             }
 
+            Write-Verbose "command: winget $(Get-WinGetSoftwareUpdateArgs -Item $upgradeItem -Interactive:$Interactive)"
             if ($Force -or $PSCmdlet.ShouldProcess($upgradeItem.Id)) {
                 $upgraded = $false
                 Update-Software $upgradeItem -Interactive:$Interactive -Success ([ref]$upgraded) -ErrorCount ([ref]$ErrorCount) -Force:$Force
