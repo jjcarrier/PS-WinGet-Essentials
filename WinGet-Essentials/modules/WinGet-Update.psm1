@@ -152,6 +152,96 @@ function Resolve-WinGetSoftwareUpgrade
 
 <#
 .DESCRIPTION
+    Attempts to upgrade to the latest version of WinGet-Essentials via the
+    PSGallery. The various configuration files required by the WinGet-Essentials
+    cmdlets will be migrated/moved from prior installations, or an error output
+    will be emitted stating that such a resouce is missing and is needed to
+    function.
+#>
+function Update-WinGetEssentials
+{
+    param(
+        <#
+        When set, the cmdlet will automatically relaunch using an Administrator
+        PowerShell instance. This cmdlet requires aministrator privileges
+        to create Symbolic Links.
+        #>
+        [switch]$Administrator,
+
+        # Perform all update operations even if no new version was detected.
+        [switch]$Force
+    )
+
+    $showJobProgress =
+    {
+        param (
+            [System.Management.Automation.Job]$Job
+        )
+
+        $progressBar = @('|','/','-','\')
+        $progressIter = 0
+        [Console]::CursorVisible = $false
+        while ($Job.JobStateInfo.State -eq "Running") {
+            $progressIter = ($progressIter + 1) % $progressBar.Count
+             Write-Host "$($progressBar[$progressIter])`b" -NoNewline
+            Start-Sleep -Milliseconds 125
+        }
+    }
+
+    if ($Administrator -and -not(Test-Administrator)) {
+        $boundParamsString = $PSBoundParameters.Keys | ForEach-Object {
+            if ($PSBoundParameters[$_] -is [switch]) {
+                if ($PSBoundParameters[$_]) {
+                    "-$($_)"
+                }
+            } else {
+                "-$($_) $($PSBoundParameters[$_])"
+            }
+        }
+        $cmdArgs = "-NoLogo -NoExit -Command Update-WinGetEssentials $($boundParamsString -join ' ')"
+        Start-Process -Verb RunAs -FilePath 'pwsh' -ArgumentList $cmdArgs
+        return
+    }
+
+    if (-not(Test-Administrator)) {
+        Write-Error 'This cmdlet must be run as an Administrator.'
+        return
+    }
+
+    Write-Output 'Upgrading module from PSGallery ...'
+    $current = @(Get-Module WinGet-Essentials -ListAvailable)[0]
+    Write-Output "- Current Version: $($current.Version)"
+    Remove-Module WinGet-Essentials
+
+    $jobName = Start-Job -ScriptBlock { Update-Module WinGet-Essentials }
+    Invoke-Command $showJobProgress -ArgumentList $jobName
+
+    $newest = @(Get-Module WinGet-Essentials -ListAvailable)[0]
+    Write-Output "- Updated Version: $($newest.Version)"
+
+    if (-not($Force) -and ($current.Version -eq $newest.Version)) {
+        Write-Output "No new version detected."
+        return
+    }
+
+    Import-Module WinGet-Essentials -RequiredVersion $newest.Version
+    Write-Output 'Migrating ignore file (if available) ...'
+    Initialize-WinGetIgnore
+    Write-Output 'Migrating "winget.packages.json" (if available) ...'
+    Initialize-WinGetRestore
+
+    Write-Output 'Creating a checkpoint ...'
+    $jobName = Start-Job -ScriptBlock { Checkpoint-WingetSoftware | Out-Null }
+    Invoke-Command $showJobProgress -ArgumentList $jobName
+
+    Write-Output 'Syncing upgrade packages ...'
+    $jobName = Start-Job -ScriptBlock { Update-WinGetSoftware -Sync | Out-Null }
+    Invoke-Command $showJobProgress -ArgumentList $jobName
+    Write-Output 'Done.'
+}
+
+<#
+.DESCRIPTION
     Provides an interactive WinGet UI for selectively installing updates.
 
 .EXAMPLE
