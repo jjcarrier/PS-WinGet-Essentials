@@ -209,19 +209,19 @@ function Update-WinGetEssentials
     }
 
     Write-Output 'Upgrading module from PSGallery ...'
-    $current = @(Get-Module WinGet-Essentials -ListAvailable)[0]
-    Write-Output "- Current Version: $($current.Version)"
+    $currentVersion = Get-Module WinGet-Essentials -ListAvailable | Select-object -Property Version -First 1
+    Write-Output "- Current Version: $currentVersion"
     Remove-Module -Name WinGet-Essentials
-    Update-Module -Name WinGet-Essentials -Repository PSGallery
-    $newest = @(Get-Module WinGet-Essentials -ListAvailable)[0]
-    Write-Output "- Updated Version: $($newest.Version)"
+    Update-Module -Name WinGet-Essentials
+    $newestVersion = Get-Module WinGet-Essentials -ListAvailable | Select-object -Property Version -First 1
+    Write-Output "- Updated Version: $newestVersion"
+    Import-Module -Name WinGet-Essentials -RequiredVersion $newestVersion
 
-    if (-not($Force) -and ($current.Version -eq $newest.Version)) {
+    if (-not($Force) -and ($currentVersion -eq $newestVersion)) {
         Write-Output "No new version detected."
         return
     }
 
-    Import-Module WinGet-Essentials -RequiredVersion $newest.Version
     Write-Output 'Migrating ignore file (if available) ...'
     Initialize-WinGetIgnore
     Write-Output 'Migrating "winget.packages.json" (if available) ...'
