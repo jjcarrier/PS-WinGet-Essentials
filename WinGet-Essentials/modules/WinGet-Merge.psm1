@@ -83,7 +83,7 @@ function Merge-WinGetRestore
                 $commandArgs += @('--source', $DefaultSource)
             }
             Clear-Host
-            winget $command
+            winget $commandArgs
             Write-Output "`n[Press ENTER to return.]"
             [Console]::CursorVisible = $false
             $cursorPos = $host.UI.RawUI.CursorPosition
