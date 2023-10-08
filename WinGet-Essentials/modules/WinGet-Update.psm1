@@ -8,9 +8,6 @@ Import-Module "$PSScriptRoot\WinGet-Utils.psm1"
 [string]$DefaultSource = 'winget'
 [string]$CacheFilePath = "$PSScriptRoot/winget.{HOSTNAME}.cache"
 
-# List of all apps that are available in a known source
-# winget list | ConvertFrom-TextTable | Where-Object { -not([string]::IsNullOrWhiteSpace($_.Source)) } | Format-Table
-
 <#
 .DESCRIPTION
     Computes a hash for an array of strings.
@@ -203,54 +200,6 @@ function Update-WinGetSoftware
 
     <#
     .DESCRIPTION
-        Increases indentation level for Write-OutputIndented.
-    #>
-    function Add-Indentation
-    {
-        param(
-            # The current indentation level which will be incremented.
-            [ref]$IndentLevel
-        )
-
-        $IndentLevel.Value++
-    }
-
-    <#
-    .DESCRIPTION
-        Decreases indentation level for Write-OutputIndented.
-    #>
-    function Remove-Indentation
-    {
-        param(
-            # The current indentation level which will be decremented.
-            [ref]$IndentLevel
-        )
-
-        if ($IndentLevel -gt 0)
-        {
-            $IndentLevel.Value--
-        }
-    }
-
-    <#
-    .DESCRIPTION
-        Write a message to console with indentation.
-    #>
-    function Write-OutputIndented
-    {
-        param (
-            # The level of indentation to apply.
-            [int]$IndentLevel,
-
-            # The message to display.
-            [string]$Message
-        )
-
-        Write-Output "$(([string]"`t") * $IndentLevel)$Message"
-    }
-
-    <#
-    .DESCRIPTION
         Check the result of the last shell command. On error, increment an error counter
         and then prompt the user if execution of the script should continue.
     .OUTPUTS
@@ -412,7 +361,7 @@ function Update-WinGetSoftware
     .DESCRIPTION
         Returns the arguments to be used for performing an update via WinGet.
     #>
-    function Get-WinGetSoftwareUpdateArgs
+    function Get-WinGetSoftwareUpgradeArgs
     {
         param (
             # The item containing the package to update along with its metadata.
@@ -464,8 +413,8 @@ function Update-WinGetSoftware
         # From https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerSharedLib/Public/AppInstallerErrors.h
         $UPDATE_NOT_APPLICABLE = 0x8A15002B
 
-        Write-Output "Updating '$($Item.Id)'..."
-        winget $(Get-WinGetSoftwareUpdateArgs -Item $Item -Interactive:$Interactive)
+        Write-Output "Updating '$($Item.Id)' ..."
+        winget $(Get-WinGetSoftwareUpgradeArgs -Item $Item -Interactive:$Interactive)
 
         $upgradeOk = $LASTEXITCODE -eq 0
 
@@ -504,13 +453,12 @@ function Update-WinGetSoftware
         )
 
         $i = $UpgradeIndex + 1
-        Write-Output "`r▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+        Write-Output "`n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
         Write-Output "[ $i / $($UpgradeTable.Count) ] Upgrading '$($UpgradeTable[$UpgradeIndex].Name)'"
         Write-Output "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬`n"
     }
 
-    [int]$ErrorCount = 0
-    [int]$IndentLevel = 0
+    [int]$errorCount = 0
 
     if ($Administrator -and -not(Test-Administrator)) {
         $boundParamsString = $PSBoundParameters.Keys | ForEach-Object {
@@ -527,8 +475,6 @@ function Update-WinGetSoftware
         return
     }
 
-    Clear-Host
-    [Console]::CursorVisible = $false
     $cacheFile = $CacheFilePath.Replace('{HOSTNAME}', $(hostname).ToLower())
 
     if (-not([string]::IsNullOrWhiteSpace($Id)))
@@ -548,10 +494,10 @@ function Update-WinGetSoftware
         $upgradeTable | ForEach-Object {
             Write-ProgressHelper -UpgradeTable $upgradeTable -UpgradeIndex $upgradeIndex
             $upgradeIndex++
-            Write-Verbose "command: winget $(Get-WinGetSoftwareUpdateArgs -Item $_ -Interactive:$Interactive)"
+            Write-Verbose "command: winget $(Get-WinGetSoftwareUpgradeArgs -Item $_ -Interactive:$Interactive)"
             if ($Force -or $PSCmdlet.ShouldProcess($_.Id)) {
                 $upgraded = $false
-                Update-Software -Item $_ -Interactive:$Interactive -Success ([ref]$upgraded) -ErrorCount ([ref]$ErrorCount) -Force:$Force
+                Update-Software -Item $_ -Interactive:$Interactive -Success ([ref]$upgraded) -ErrorCount ([ref]$errorCount) -Force:$Force
                 if ($upgraded) {
                     Remove-UpgradeItemFromCache -Item $_
                 }
@@ -593,9 +539,7 @@ function Update-WinGetSoftware
         $upgradeTable = $upgradeTable | Sort-Object -Property Name
 
         Write-Output "Upgrading:"
-        Add-Indentation -IndentLevel ([ref]$IndentLevel)
-        $upgradeTable | ForEach-Object { Write-OutputIndented -IndentLevel $IndentLevel -Message "- $($_.Name)" }
-        Remove-Indentation -IndentLevel ([ref]$IndentLevel)
+        $upgradeTable | ForEach-Object { Write-Output "- $($_.Name)" }
     }
     else
     {
@@ -647,10 +591,10 @@ function Update-WinGetSoftware
                 continue
             }
 
-            Write-Verbose "command: winget $(Get-WinGetSoftwareUpdateArgs -Item $upgradeItem -Interactive:$Interactive)"
+            Write-Verbose "command: winget $(Get-WinGetSoftwareUpgradeArgs -Item $upgradeItem -Interactive:$Interactive)"
             if ($Force -or $PSCmdlet.ShouldProcess($upgradeItem.Id)) {
                 $upgraded = $false
-                Update-Software $upgradeItem -Interactive:$Interactive -Success ([ref]$upgraded) -ErrorCount ([ref]$ErrorCount) -Force:$Force
+                Update-Software $upgradeItem -Interactive:$Interactive -Success ([ref]$upgraded) -ErrorCount ([ref]$errorCount) -Force:$Force
                 if ($upgraded) {
                     Remove-UpgradeItemFromCache -Item $upgradeItem
                 }
@@ -660,8 +604,8 @@ function Update-WinGetSoftware
         }
     }
 
-    if ($ErrorCount -gt 0) {
-        Write-Error "Done (Errors = $ErrorCount)."
+    if ($errorCount -gt 0) {
+        Write-Error "Done (Errors = $errorCount)."
     } else {
         Write-Output 'Done.'
     }
