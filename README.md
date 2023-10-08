@@ -79,9 +79,10 @@ the various resources needed by the cmdlets:
    consider adding these to the ignore file that was just created (each entry
    should be on its own line).
 
-With the above steps in place, the tools can generally be used without
-administrator privileges, but for installation of packages, this will depend on
-the particular package.
+With the above steps in place, the majority of this module's cmdlets can
+generally be used without administrator privileges, but for installation of
+packages, this will depend on the particular package and whether they support
+elevation of permissions.
 
 ## [Upgrading](#table-of-contents)
 
@@ -409,8 +410,9 @@ be asked what tags to assign the package (if any).
 
 ### Usage
 
-Running the command below on two or more systems will allow the user to easily
-create a superset of software package IDs.
+Running the command below on two or more systems sharing the same
+`winget.packages.json` (i.e. via file sync / cloud storage solutions) will allow
+the user to easily create a superset of software package IDs.
 
 ```pwsh
 Merge-WinGetRestore
