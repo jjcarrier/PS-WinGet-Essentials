@@ -211,8 +211,8 @@ function Update-WinGetEssentials
     Write-Output 'Upgrading module from PSGallery ...'
     $current = @(Get-Module WinGet-Essentials -ListAvailable)[0]
     Write-Output "- Current Version: $($current.Version)"
-    Remove-Module WinGet-Essentials
-    Update-Module WinGet-Essentials
+    Remove-Module -Name WinGet-Essentials
+    Update-Module -Name WinGet-Essentials -Repository PSGallery
     $newest = @(Get-Module WinGet-Essentials -ListAvailable)[0]
     Write-Output "- Updated Version: $($newest.Version)"
 
