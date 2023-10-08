@@ -113,10 +113,11 @@ function Merge-WinGetRestore
     }
 
     $jsonModified = $false
-    $newPackages.PackageIdentifier | ForEach-Object {
+    $newPackages | ForEach-Object {
+        $id = $_.PackageIdentifier
         $merge = $true
         if (-not($MergeAll)) {
-            $question = "Merge package '$_' into 'winget.packages.json'?"
+            $question = "Merge package '$$id' into 'winget.packages.json'?"
             $choices = @(
                 [System.Management.Automation.Host.ChoiceDescription]::new("&Yes", "Do merge")
                 [System.Management.Automation.Host.ChoiceDescription]::new("&No", "Do not merge")
@@ -128,14 +129,14 @@ function Merge-WinGetRestore
 
         if ($merge) {
             $newEntry = [PSCustomObject]@{
-                PackageIdentifier = [string]$_
+                PackageIdentifier = [string]$id
                 Tags = @()
             }
 
             if ($NoTags) {
                 # Skip prompting user for tagging each new package.
             } else {
-                Write-Output "Enter tags for package '$_'. An empty entry concludes data entry."
+                Write-Output "Enter tags for package '$id'. An empty entry concludes data entry."
                 while ($true) {
                     $tagEntry = Read-Host "Enter a tag name"
 
@@ -149,9 +150,9 @@ function Merge-WinGetRestore
 
             $packages += $newEntry
             $jsonModified = $true
-            Write-Output "Added package '$_'"
+            Write-Output "Added package '$id'"
         } else {
-            Write-Output "Skipped package: '$_'"
+            Write-Output "Skipped package: '$id'"
         }
     }
 
