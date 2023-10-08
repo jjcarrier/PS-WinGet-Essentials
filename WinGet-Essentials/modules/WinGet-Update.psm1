@@ -215,13 +215,13 @@ function Update-WinGetEssentials
     Update-Module -Name WinGet-Essentials
     $newest = @(Get-Module WinGet-Essentials -ListAvailable)[0]
     Write-Output "- Updated Version: $($newest.Version)"
+    Import-Module WinGet-Essentials -RequiredVersion $newest.Version
 
     if (-not($Force) -and ($current.Version -eq $newest.Version)) {
         Write-Output "No new version detected."
         return
     }
 
-    Import-Module WinGet-Essentials -RequiredVersion $newest.Version
     Write-Output 'Migrating ignore file (if available) ...'
     Initialize-WinGetIgnore
     Write-Output 'Migrating "winget.packages.json" (if available) ...'
