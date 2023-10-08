@@ -354,7 +354,7 @@ file is given the default name of `winget.packages.json`):
 As a side-effect of adding CI testing, there was a need to create a _fake_
 `PackageIdentifier` as a way to skip potentially length `winget` install requests
 during test execution and to allow more control over how test execution flows
-through the PowerShell logic. A `PackageIdentifier` following the form, `/*/`
+through the PowerShell logic. A `PackageIdentifier` following the form, `<*>`
 will be detected as _fake_ (where * is a wildcard and represents the
 user-defined name of the _fake_ package):
 
