@@ -501,17 +501,26 @@ function Update-WinGetSoftware
         $UPDATE_NOT_APPLICABLE = 0x8A15002B
 
         Write-Output "Updating '$($Item.Id)' ..."
-        winget $(Get-WinGetSoftwareUpgradeArgs -Item $Item -Interactive:$Interactive)
+        $commandArgs = Get-WinGetSoftwareUpgradeArgs -Item $Item -Interactive:$Interactive
+        winget $commandArgs
 
         $upgradeOk = $LASTEXITCODE -eq 0
 
         if (-not($upgradeOk) -and ($LASTEXITCODE -eq $UPDATE_NOT_APPLICABLE)) {
-            # This is a workaround for an issue currently present in winget where
-            # the listing reports an update, but it is not possible to 'upgrade'.
-            # Instead, use the 'install' command. This issue might be caused by
-            # different install wizard on the local system versus what is
-            # present on the winget source.
+            # This is a best-effort workaround for an issue currently present in
+            # winget where the listing reports an update, but it is not possible
+            # to 'upgrade'. Instead, use the 'install' command. This is
+            # typically due to a different installer used for the current
+            # installation versus what is available on the winget source. In
+            # this case, try with --uninstall-previous, but support for this is
+            # not guaranteed. If this fails, the user likely needs to
+            # "winget uninstall" and then "winget install". This could
+            # potentially be handled here, but there may be issues with ensuring
+            # the install state is maintained. For now it is best to force the
+            # user to upgrade this package manually.
             $commandArgs[0] = 'install'
+            $commandArgs += '--uninstall-previous'
+            Write-Verbose "command: winget $commandArgs"
             winget $commandArgs
         }
 
