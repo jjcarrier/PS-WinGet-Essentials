@@ -40,7 +40,7 @@ function Initialize-WinGetResource
         Write-Output "Creating new symlink for '$DestinationFilename'."
         New-Item @SymLinkArgs
     } elseif (Test-Path $DestinationFile) {
-        Write-Output "The '$DestinationFilename' is already initialized."
+        Write-Output "The '$DestinationFilename' file is already initialized."
         return
     } else {
         $currentVersion = [version]"0.0"
