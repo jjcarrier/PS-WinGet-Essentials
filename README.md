@@ -85,25 +85,47 @@ the particular package.
 
 ## [Upgrading](#table-of-contents)
 
-To upgrade to a new release of the module run:
+### For module versions >= 1.6.1
+
+To upgrade from a previously configured installation to a newer release of the
+module, in an Administrator instance of PowerShell, run:
 
 ```pwsh
-Upgrade-Module -Name WinGet-Essentials -Repository PSGallery
+Update-WinGetEssentials
+```
+
+### Alternative update method (for module versions < 1.6.1)
+
+If desired, it is also possible to perform a more manual upgrade process using
+`Update-Module` as shown below and performing the additional actions outlined
+in the paragraphs that follow.
+
+```pwsh
+Update-Module -Name WinGet-Essentials -Repository PSGallery
 ```
 
 > [!NOTE]\
 > If the `WinGet-Essentials` module is already loaded, restart the terminal or
   reload the module explicitly via `Remove-Module` followed by `Import-Module`.
 
-After the upgrade completes, it is advisable to run the following commands in
-an administrator PowerShell instance to allow new symbolic links to be created.
-Some cmdlets will attempt to perform this automatically, but it will only
-be possible to create a SymLink if the cmdlet is running in an administrator
-PowerShell instance.
+After `Upgrade-Module` completes, it is advisable to run the following commands
+in an administrator PowerShell instance to allow new symbolic links to be
+created. Some cmdlets will attempt to perform this automatically, but it will
+only be possible to create a SymLink if the cmdlet is running in an
+administrator PowerShell instance.
 
 ```pwsh
 Initialize-WinGetIgnore
 Initialize-WinGetRestore
+```
+
+It may also be desirable to run the following to have other resources/functions
+ready to use (such as tab-completion for package IDs with
+`Update-WinGetSoftware` or use of `Restore-WinGetSoftware`):
+
+```pwsh
+Checkpoint-WinGetSoftware
+Update-WinGetSoftware -Sync
 ```
 
 > [!NOTE]\
@@ -323,6 +345,27 @@ file is given the default name of `winget.packages.json`):
     }
 ]
 ```
+
+### Fake Packages (EXPERIMENTAL)
+
+> [!NOTE]\
+> Behavior is subject to change in the future.
+
+As a side-effect of adding CI testing, there was a need to create a _fake_
+`PackageIdentifier` as a way to skip potentially length `winget` install requests
+during test execution and to allow more control over how test execution flows
+through the PowerShell logic. A `PackageIdentifier` following the form, `/*/`
+will be detected as _fake_ (where * is a wildcard and represents the
+user-defined name of the _fake_ package):
+
+Because of this, it is possible to specify `winget.packages.json` entries
+that do not point to a software package to install, rather a series of
+commands/scripts via the `PostInstall` functionality. However, one current
+limitation of this feature is there is no guarantee that `-NotInstalled` will
+work correctly for these packages as they exist outside the scope of `winget`.
+
+While it is certainly handy to provide a unified way to download all tools via
+one interface, the current advice is to __use this feature sparingly__.
 
 ### Example PostInstall Entry
 
