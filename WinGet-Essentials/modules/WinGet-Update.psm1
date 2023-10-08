@@ -212,10 +212,7 @@ function Update-WinGetEssentials
     $current = @(Get-Module WinGet-Essentials -ListAvailable)[0]
     Write-Output "- Current Version: $($current.Version)"
     Remove-Module WinGet-Essentials
-
-    $jobName = Start-Job -ScriptBlock { Update-Module WinGet-Essentials }
-    Invoke-Command $showJobProgress -ArgumentList $jobName
-
+    Update-Module WinGet-Essentials
     $newest = @(Get-Module WinGet-Essentials -ListAvailable)[0]
     Write-Output "- Updated Version: $($newest.Version)"
 
