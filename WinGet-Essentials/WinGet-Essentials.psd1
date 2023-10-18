@@ -1,11 +1,11 @@
 @{
     RootModule = 'WinGet-Essentials.psm1'
-    ModuleVersion = '1.7.1'
+    ModuleVersion = '1.7.2'
     GUID = '2a2b6c24-d6cc-4d59-a456-e7ccd90afd03'
     Author = 'Jon Carrier'
     CompanyName = 'Unknown'
     Copyright = '(c) Jon Carrier. All rights reserved.'
-    Description = 'Essential "winget" utilities.'
+    Description = 'Provides cmdlets that compliment the existing WinGet CLI. Primarily, improves the user-experience for software updates and offers a convenient way to install collections of software via WinGet through the use of user-defined tags.'
 
     # CompatiblePSEditions = @()
     # PowerShellVersion = ''
