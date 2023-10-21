@@ -3,7 +3,7 @@ Set-StrictMode -Version 3
 Import-Module "$PSScriptRoot\WinGet-Utils.psm1"
 
 # Used for specifing the default choice when prompting the user.
-[int]$DefaultChoiceYes = 0
+[int]$DefaultChoiceContinue = 0
 
 [string]$DefaultSource = 'winget'
 [string]$CacheFilePath = "$PSScriptRoot/winget.{HOSTNAME}.cache"
@@ -325,63 +325,36 @@ function Update-WinGetSoftware
 
             # The force state as specified by the user. When set, it will bypass,
             # prompts and continue on with execution.
-            [switch]$Force
+            [switch]$Force,
+
+            # The decision (index) made by the user.
+            [ref]$Action
         )
 
         Write-Output ""
         Write-Warning "An error (code: $Code) occurred while executing the last step."
 
-        if (-not($Force) -and -not(Request-YesOrNo "Do you want to continue?" $DefaultChoiceYes))
+        if ($Force) {
+            return
+        }
+
+        $abortIndex = 2
+        $title = $null # not used
+        $question = "What action should be performed?"
+        $choices = @(
+            [System.Management.Automation.Host.ChoiceDescription]::new("&Continue", "Continue installing other software (if available).")
+            [System.Management.Automation.Host.ChoiceDescription]::new("&Retry", "Retry installation of the current software package.")
+            [System.Management.Automation.Host.ChoiceDescription]::new("&Abort", "Stop and exit installation process.")
+        )
+
+        $Action.Value = $Host.UI.PromptForChoice($title, $question, $choices, $DefaultChoiceContinue)
+
+        if ($Action.Value -eq $abortIndex)
         {
             throw "Aborted (Errors = $ErrorCount)."
         }
 
         Write-Output ""
-    }
-
-    <#
-    .DESCRIPTION
-        Create and show a 'Yes' or 'No' prompt to the user and return the user's response.
-    .OUTPUTS
-        [bool] The user's decision.
-    #>
-    function Request-YesOrNo
-    {
-        param (
-            # The Yes-No question to ask the user.
-            [string]$Question,
-
-            # The index of the default choice (-1=None, 0=Yes, 1=No).
-            [int]$DefaultChoiceIndex
-        )
-
-        $choices  = '&Yes', '&No'
-        $decision = Request-Choice -Question $Question -Choices $choices -DefaultChoiceIndex $DefaultChoiceIndex
-        return ($decision -eq $DefaultChoiceYes)
-    }
-
-    <#
-    .DESCRIPTION
-        Create and show a prompt with multiple choices and return the user's response.
-    .OUTPUTS
-        [int] The user's decision.
-    #>
-    function Request-Choice
-    {
-        param (
-            # The question to ask the user.
-            [string]$Question,
-
-            # The available choices.
-            [string[]]$Choices,
-
-            # The index of the default choice (-1=None, Other values relate to provided choices).
-            [int]$DefaultChoiceIndex
-        )
-
-        $title = $null # not used
-        $decision = $Host.UI.PromptForChoice($title, $Question, $Choices, $DefaultChoiceIndex)
-        return $decision
     }
 
     <#
@@ -499,41 +472,47 @@ function Update-WinGetSoftware
 
         # From https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerSharedLib/Public/AppInstallerErrors.h
         $UPDATE_NOT_APPLICABLE = 0x8A15002B
+        $done = $false
 
-        Write-Verbose "Updating '$($Item.Id)' ..."
-        $commandArgs = Get-WinGetSoftwareUpgradeArgs -Item $Item -Interactive:$Interactive
-        winget $commandArgs
-
-        $upgradeOk = $LASTEXITCODE -eq 0
-
-        if (-not($upgradeOk) -and ($LASTEXITCODE -eq $UPDATE_NOT_APPLICABLE)) {
-            # This is a best-effort workaround for an issue currently present in
-            # winget where the listing reports an update, but it is not possible
-            # to 'upgrade'. Instead, use the 'install' command. This is
-            # typically due to a different installer used for the current
-            # installation versus what is available on the winget source. In
-            # this case, try with --uninstall-previous, but support for this is
-            # not guaranteed. If this fails, the user likely needs to
-            # "winget uninstall" and then "winget install". This could
-            # potentially be handled here, but there may be issues with ensuring
-            # the install state is maintained. For now it is best to force the
-            # user to upgrade this package manually.
-            $commandArgs[0] = 'install'
-            $commandArgs += '--uninstall-previous'
-            Write-Verbose "command: winget $commandArgs"
+        while (-not($done)) {
+            Write-Verbose "Updating '$($Item.Id)' ..."
+            $commandArgs = Get-WinGetSoftwareUpgradeArgs -Item $Item -Interactive:$Interactive
             winget $commandArgs
-        }
 
-        # TODO: Ignore exit code 3010 (seems to indicate "restart required")?
-        if (Test-LastCommandResult -ErrorCount $ErrorCount -Force:$Force) {
-            Write-Verbose "Updated '$($Item.Id)'"
-            Write-Verbose "`tOld Version: [$($Item.Version)]"
-            Write-Verbose "`tNew Version: [$($Item.Available)]"
-            Write-Output ""
-            $Success.Value = $true
-        } else {
-            Request-ContinueOnError -Code $LastExitCode -ErrorCount $ErrorCount.Value -Force:$Force
-            $Success.Value = $false
+            $upgradeOk = $LASTEXITCODE -eq 0
+
+            if (-not($upgradeOk) -and ($LASTEXITCODE -eq $UPDATE_NOT_APPLICABLE)) {
+                # This is a best-effort workaround for an issue currently present in
+                # winget where the listing reports an update, but it is not possible
+                # to 'upgrade'. Instead, use the 'install' command. This is
+                # typically due to a different installer used for the current
+                # installation versus what is available on the winget source. In
+                # this case, try with --uninstall-previous, but support for this is
+                # not guaranteed. If this fails, the user likely needs to
+                # "winget uninstall" and then "winget install". This could
+                # potentially be handled here, but there may be issues with ensuring
+                # the install state is maintained. For now it is best to force the
+                # user to upgrade this package manually.
+                $commandArgs[0] = 'install'
+                $commandArgs += '--uninstall-previous'
+                Write-Verbose "command: winget $commandArgs"
+                winget $commandArgs
+            }
+
+            # TODO: Ignore exit code 3010 (seems to indicate "restart required")?
+            if (Test-LastCommandResult -ErrorCount $ErrorCount -Force:$Force) {
+                $done = $true
+                Write-Verbose "Updated '$($Item.Id)'"
+                Write-Verbose "`tOld Version: [$($Item.Version)]"
+                Write-Verbose "`tNew Version: [$($Item.Available)]"
+                Write-Output ""
+                $Success.Value = $true
+            } else {
+                $action = 0
+                Request-ContinueOnError -Code $LastExitCode -ErrorCount $ErrorCount.Value -Force:$Force -Action ([ref]$action)
+                $done = $action -eq $DefaultChoiceContinue # The 'Abort' action is handled by Request-ContinueOnError
+                $Success.Value = $false
+            }
         }
     }
 
