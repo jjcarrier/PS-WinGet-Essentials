@@ -500,7 +500,7 @@ function Update-WinGetSoftware
         # From https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerSharedLib/Public/AppInstallerErrors.h
         $UPDATE_NOT_APPLICABLE = 0x8A15002B
 
-        Write-Output "Updating '$($Item.Id)' ..."
+        Write-Verbose "Updating '$($Item.Id)' ..."
         $commandArgs = Get-WinGetSoftwareUpgradeArgs -Item $Item -Interactive:$Interactive
         winget $commandArgs
 
@@ -526,7 +526,7 @@ function Update-WinGetSoftware
 
         # TODO: Ignore exit code 3010 (seems to indicate "restart required")?
         if (Test-LastCommandResult -ErrorCount $ErrorCount -Force:$Force) {
-            Write-Output "`nUpdated '$($Item.Id)'"
+            Write-Verbose "Updated '$($Item.Id)'"
             Write-Verbose "`tOld Version: [$($Item.Version)]"
             Write-Verbose "`tNew Version: [$($Item.Available)]"
             Write-Output ""
@@ -549,9 +549,10 @@ function Update-WinGetSoftware
         )
 
         $i = $UpgradeIndex + 1
-        Write-Output "`n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+        $bar = ('─' * 64) # Match Width of TableUI
+        Write-Output "`n$bar"
         Write-Output "[ $i / $($UpgradeTable.Count) ] Upgrading '$($UpgradeTable[$UpgradeIndex].Name)'"
-        Write-Output "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬`n"
+        Write-Output "$bar`n"
     }
 
     [int]$errorCount = 0
@@ -666,7 +667,7 @@ function Update-WinGetSoftware
             Title = 'Select Software to Update'
             DefaultMemberToShow = 'Name'
             SelectedItemMembersToShow = @('Name','Id','Version','Available')
-            EnterKeyDescription = 'Press ENTER to show selection details.                      '
+            EnterKeyDescription = 'Press ENTER to show selection details.'
             EnterKeyScript = $ShowPackageDetailsScriptBlock
         }
 
