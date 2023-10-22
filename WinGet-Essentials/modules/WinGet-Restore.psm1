@@ -343,7 +343,7 @@ function Get-WinGetSoftwareInstallArgs
     $packageIdArg = " --id $($Package.PackageIdentifier)"
 
     if (-not([string]::IsNullOrWhiteSpace($DefaultSource))) {
-        $sourceArg = "--source $DefaultSource"
+        $sourceArg = " --source $DefaultSource"
     } else {
         $sourceArg = ''
     }
