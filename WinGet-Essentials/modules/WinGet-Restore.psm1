@@ -89,9 +89,10 @@ function Restore-WinGetSoftware
         )
 
         $i = $PackageIndex + 1
-        Write-Output "`r▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+        $bar = ('─' * 64) # Match Width of TableUI
+        Write-Output "`r$bar"
         Write-Output "[ $i / $($Packages.Count) ] Installing '$($Packages[$PackageIndex].PackageIdentifier)'"
-        Write-Output "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬`n"
+        Write-Output "$bar`n"
     }
 
     if ($Administrator -and -not(Test-Administrator)) {
