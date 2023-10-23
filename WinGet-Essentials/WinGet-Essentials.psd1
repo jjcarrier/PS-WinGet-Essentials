@@ -1,6 +1,6 @@
 @{
     RootModule = 'WinGet-Essentials.psm1'
-    ModuleVersion = '1.8.0'
+    ModuleVersion = '1.8.1'
     GUID = '2a2b6c24-d6cc-4d59-a456-e7ccd90afd03'
     Author = 'Jon Carrier'
     CompanyName = 'Unknown'
@@ -16,7 +16,7 @@
 
     RequiredModules = @(
         @{ModuleName = 'TextTable'; ModuleVersion = '1.0.2'; Guid = '16a5ab4c-4d8c-42d6-8f72-227aea552a84'},
-        @{ModuleName = 'TableUI'; ModuleVersion = '1.2.0';  Guid = 'b5eb9ef8-a2ef-40d4-a8d5-46d91ab7060e'}
+        @{ModuleName = 'TableUI'; ModuleVersion = '1.2.2';  Guid = 'b5eb9ef8-a2ef-40d4-a8d5-46d91ab7060e'}
     )
     FunctionsToExport = @('Update-WinGetEssentials', 'Update-WinGetSoftware', 'Checkpoint-WinGetSoftware', 'Restore-WinGetSoftware', 'Initialize-WinGetIgnore', 'Initialize-WinGetRestore', 'Merge-WinGetRestore')
     CmdletsToExport = @()
