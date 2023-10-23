@@ -215,8 +215,8 @@ generated from `Checkpoint-WinGetSoftware`.
 
 ### Usage
 
-Example: All packages containing the both the tags: "Dev" and "Essential" will
-be presented in a UI for user refinement of packages to install.
+Example: All packages containing both "Dev" and "Essential" tags will
+be presented in a UI for user refinement of which packages to install.
 
 ```pwsh
 Restore-WinGetSoftware -Tag Dev,Essential -UseUI
@@ -353,10 +353,10 @@ file is given the default name of `winget.packages.json`):
 > Behavior is subject to change in the future.
 
 As a side-effect of adding CI testing, there was a need to create a _fake_
-`PackageIdentifier` as a way to skip potentially length `winget` install requests
-during test execution and to allow more control over how test execution flows
-through the PowerShell logic. A `PackageIdentifier` following the form, `<*>`
-will be detected as _fake_ (where * is a wildcard and represents the
+`PackageIdentifier` as a way to skip potentially lengthy `winget` install
+requests during test execution and to allow more control over how test execution
+flows through the PowerShell logic. A `PackageIdentifier` following the form,
+`<*>` will be detected as _fake_ (where * is a wildcard and represents the
 user-defined name of the _fake_ package):
 
 Because of this, it is possible to specify `winget.packages.json` entries
