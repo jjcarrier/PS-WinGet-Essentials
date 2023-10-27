@@ -319,11 +319,15 @@ Each entry above may specify various optional key-values which include:
 
 * Install Location
 * Package Version
-  * Both weak and strong version locking, via the `VersionLock` key
+  * Both weak and strong version locking can be specified through the inclusion
+    or omission of the `VersionLock` key.
+* Interactive Install
+  * Force the install command for a specific `PackageIdentifier` to always
+    include `--interactive`. This remains true even `-Force` is specified.
 * Additional Arguments
   * Arguments may be passed directly to `winget` to expose all other command
     options that have not been specifically supported by this JSON format.
-* Post-installation commands
+* Post-installation Commands
   * Supports execution with various control options (error handling/prompts).
 
 Further details available in [packages.schema.json](WinGet-Essentials/modules/schema/packages.schema.json)
