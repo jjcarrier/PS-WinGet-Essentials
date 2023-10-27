@@ -332,7 +332,7 @@ function Update-WinGetSoftware
         )
 
         Write-Output ""
-        Write-Warning "An error (code: $Code) occurred while executing the last step."
+        Write-Warning "An error (code: $("0x{0:X08}" -f $Code)) occurred while executing the last step."
 
         if ($Force) {
             return
