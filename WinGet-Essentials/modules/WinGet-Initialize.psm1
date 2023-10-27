@@ -17,7 +17,7 @@ function Initialize-WinGetResource
         [string]$SourceFile,
 
         # Points to one of the internally referernced resource files which
-        # the $SourceFile will be SmyLink'd or copied to.
+        # the -SourceFile will be SymLink'd or copied to.
         [string]$DestinationFile
     )
 

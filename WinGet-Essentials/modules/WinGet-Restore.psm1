@@ -25,7 +25,7 @@ function Restore-WinGetSoftware
         # The specified tags to filter and determine which software to install.
         # A matching package is one that contains all the specified tags.
         # See $MatchAny to change the filtering behavior for this parameter.
-        [Parameter(Mandatory = $true, ParameterSetName = 'Filter')]
+        [Parameter(Mandatory, ParameterSetName = 'Filter')]
         [string[]]$Tag,
 
         # When set, the specified list of $Tag will no longer require a package
@@ -265,7 +265,7 @@ function Restore-WinGetSoftware
         $TableUIArgs = @{
             Table = $installPackages
             Title = 'Select Software to Install'
-            EnterKeyDescription = "Press ENTER to show selection details.                      "
+            EnterKeyDescription = "Press ENTER to show selection details."
             EnterKeyScript = $ShowPackageDetailsScriptBlock
             DefaultMemberToShow = "PackageIdentifier"
             SelectedItemMembersToShow = @("PackageIdentifier", "Tags", "Version", "Location", "Interactive")
