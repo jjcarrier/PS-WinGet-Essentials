@@ -117,7 +117,7 @@ function Merge-WinGetRestore
         $id = $_.PackageIdentifier
         $merge = $true
         if (-not($MergeAll)) {
-            $question = "Merge package '$$id' into 'winget.packages.json'?"
+            $question = "Merge package '$id' into 'winget.packages.json'?"
             $choices = @(
                 [System.Management.Automation.Host.ChoiceDescription]::new("&Yes", "Do merge")
                 [System.Management.Automation.Host.ChoiceDescription]::new("&No", "Do not merge")
