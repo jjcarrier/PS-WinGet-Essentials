@@ -328,11 +328,19 @@ function Update-WinGetSoftware
             [switch]$Force,
 
             # The decision (index) made by the user.
-            [ref]$Action
+            [ref]$Action,
+
+            # Command details that will be output to warning log.
+            [string]$CmdDetails
         )
 
         Write-Output ""
-        Write-Warning "An error (code: $("0x{0:X08}" -f $Code)) occurred while executing the last step."
+        if ([string]::IsNullOrWhiteSpace($CmdDetails)) {
+            Write-Warning "An error (code: $("0x{0:X08}" -f $Code)) occurred while executing the last step."
+        } else {
+            Write-Warning "An error (code: $("0x{0:X08}" -f $Code)) occurred while executing:"
+            Write-Warning $CmdDetails
+        }
 
         if ($Force) {
             return
@@ -509,7 +517,7 @@ function Update-WinGetSoftware
                 $Success.Value = $true
             } else {
                 $action = 0
-                Request-ContinueOnError -Code $LastExitCode -ErrorCount $ErrorCount.Value -Force:$Force -Action ([ref]$action)
+                Request-ContinueOnError -Code $LastExitCode -ErrorCount $ErrorCount.Value -Force:$Force -Action ([ref]$action) -CmdArgs @('winget', $commandArgs)
                 $done = $action -eq $DefaultChoiceContinue # The 'Abort' action is handled by Request-ContinueOnError
                 $Success.Value = $false
             }
