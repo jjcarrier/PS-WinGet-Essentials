@@ -67,11 +67,12 @@ function Restore-WinGetSoftware
         [Parameter()]
         [switch]$Interactive,
 
-        # Acts as a inverse of -Confirm. Provided for convenience.
+        # Acts as an inverse of -Confirm. Provided for convenience.
         [Parameter()]
         [switch]$Force,
 
-        # Launches and runs the invoked command in an administrator instance of PowerShell.
+        # Launches and runs the invoked command in an administrator instance of
+        # PowerShell.
         [Parameter()]
         [switch]$Administrator,
 

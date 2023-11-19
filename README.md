@@ -284,7 +284,8 @@ called internally by `Restore-WinGetSoftware` to handle migrating previous
 `winget.packages.json` instances to the current version.
 
 When using this `Restore-WinGetSoftware` for the first time, the user needs
-to manually create/define this JSON file and ideally, create a SymLink to it.
+to manually create/define this JSON file and ideally, create a SymLink to it
+(see the [Installation](#installation) section above for details).
 This for instance, may be placed in a cloud backup folder that syncs between
 computers so that the package list is shared between multiple systems that
 are to have similar software packages installed.
