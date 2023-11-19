@@ -157,7 +157,7 @@ function Merge-WinGetRestore
     }
 
     if ($jsonModified) {
-        $packages | ConvertTo-Json -Depth 3 | Out-File $PackageDatabase
+        $packages | Sort-Object -Property PackageIdentifier | ConvertTo-Json -Depth 3 | Out-File $PackageDatabase
         if ($?) {
             Write-Output "Saved configuration: '$PackageDatabase'"
         }
