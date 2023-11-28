@@ -536,7 +536,7 @@ function Update-WinGetSoftware
         )
 
         $i = $UpgradeIndex + 1
-        $bar = ('─' * 64) # Match Width of TableUI
+        $bar = ('─' * $Host.UI.RawUI.WindowSize.Width) # Match current console width
         Write-Output "`n$bar"
         Write-Output "[ $i / $($UpgradeTable.Count) ] Upgrading '$($UpgradeTable[$UpgradeIndex].Name)'"
         Write-Output "$bar`n"
