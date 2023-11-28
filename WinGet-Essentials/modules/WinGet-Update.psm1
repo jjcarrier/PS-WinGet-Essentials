@@ -652,7 +652,7 @@ function Update-WinGetSoftware
             Table = $upgradeTable
             Selections = ([ref]$selections)
             Title = 'Select Software to Update'
-            DefaultMemberToShow = 'Name'
+            DefaultMemberToShow = @('Name','Available','Version')
             SelectedItemMembersToShow = @('Name','Id','Version','Available')
             EnterKeyDescription = 'Press ENTER to show selection details.'
             EnterKeyScript = $ShowPackageDetailsScriptBlock
