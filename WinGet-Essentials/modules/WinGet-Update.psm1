@@ -87,13 +87,14 @@ function Get-WinGetSoftwareUpgrade
         }
     }
 
-    if (-not($cached))
-    {
+    if (-not($cached)) {
         $lastLineRegex = "\d+ upgrades available\."
         $splitIndex = ($response | Select-String $lastLineRegex).LineNumber
         $upgrades = $response | ConvertFrom-TextTable -LastLineRegEx $lastLineRegex
         $lastLineRegex = "\d+ package\(s\)"
-        $upgrades += $response[$splitIndex..($response.Count-1)] | ConvertFrom-TextTable -LastLineRegEx $lastLineRegex
+        if ($splitIndex -le ($response.Count-1)) {
+            $upgrades += $response[$splitIndex..($response.Count-1)] | ConvertFrom-TextTable -LastLineRegEx $lastLineRegex
+        }
 
         if ($UseIgnores) {
             $upgrades = $upgrades | Where-Object {
