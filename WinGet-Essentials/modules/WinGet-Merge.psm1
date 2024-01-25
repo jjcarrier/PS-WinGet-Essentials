@@ -86,9 +86,9 @@ function Merge-WinGetRestore
             winget $commandArgs
             Write-Output "`n[Press ENTER to return.]"
             [Console]::CursorVisible = $false
-            $cursorPos = $host.UI.RawUI.CursorPosition
-            while ($host.ui.RawUI.ReadKey().VirtualKeyCode -ne [ConsoleKey]::Enter) {
-                $host.UI.RawUI.CursorPosition = $cursorPos
+            $cursorPos = $Host.UI.RawUI.CursorPosition
+            while ($Host.ui.RawUI.ReadKey().VirtualKeyCode -ne [ConsoleKey]::Enter) {
+                $Host.UI.RawUI.CursorPosition = $cursorPos
                 [Console]::CursorVisible = $false
             }
         }
