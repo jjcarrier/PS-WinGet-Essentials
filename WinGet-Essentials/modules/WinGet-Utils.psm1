@@ -47,3 +47,21 @@ function Get-WinGetSoftwareIgnores
 
     return Get-Content $ignoreFile
 }
+
+<#
+.DESCRIPTION
+    Enter the "Alternate Screen Buffer".
+#>
+function Enter-AltScreenBuffer
+{
+    $Host.UI.Write([char]27 + "[?1049h")
+}
+
+<#
+.DESCRIPTION
+    Exit the "Alternate Screen Buffer".
+#>
+function Exit-AltScreenBuffer
+{
+    $Host.UI.Write([char]27 + "[?1049l")
+}

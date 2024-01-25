@@ -659,7 +659,9 @@ function Update-WinGetSoftware
             EnterKeyScript = $ShowPackageDetailsScriptBlock
         }
 
+        Enter-AltScreenBuffer
         Show-TableUI @TableUIArgs
+        Exit-AltScreenBuffer
     }
 
     if (($upgradeTable.Count -gt 0) -and ($null -ne $selections))
