@@ -179,12 +179,12 @@ function Update-WinGetEssentials
             [System.Management.Automation.Job]$Job
         )
 
-        $progressBar = @('|','/','-','\')
+        $progressIndicator = @('|','/','-','\')
         $progressIter = 0
         [Console]::CursorVisible = $false
         while ($Job.JobStateInfo.State -eq "Running") {
-            $progressIter = ($progressIter + 1) % $progressBar.Count
-             Write-Host "$($progressBar[$progressIter])`b" -NoNewline
+            $progressIter = ($progressIter + 1) % $progressIndicator.Count
+             Write-Host "$($progressIndicator[$progressIter])`b" -NoNewline
             Start-Sleep -Milliseconds 125
         }
     }
@@ -642,9 +642,9 @@ function Update-WinGetSoftware
             winget $commandArgs
             Write-Output "`n[Press ENTER to return.]"
             [Console]::CursorVisible = $false
-            $cursorPos = $host.UI.RawUI.CursorPosition
-            while ($host.ui.RawUI.ReadKey().VirtualKeyCode -ne [ConsoleKey]::Enter) {
-                $host.UI.RawUI.CursorPosition = $cursorPos
+            $cursorPos = $Host.UI.RawUI.CursorPosition
+            while ($Host.ui.RawUI.ReadKey().VirtualKeyCode -ne [ConsoleKey]::Enter) {
+                $Host.UI.RawUI.CursorPosition = $cursorPos
                 [Console]::CursorVisible = $false
             }
         }
