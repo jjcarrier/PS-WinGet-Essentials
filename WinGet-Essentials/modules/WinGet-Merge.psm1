@@ -103,7 +103,9 @@ function Merge-WinGetRestore
             Selections = ([ref]$selections)
         }
 
+        Enter-AltScreenBuffer
         Show-TableUI @TableUIArgs
+        Exit-AltScreenBuffer
 
         if ($null -eq $selections) {
             $newPackages = @();
