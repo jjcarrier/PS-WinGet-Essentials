@@ -622,9 +622,6 @@ function Update-WinGetSoftware
         # Upgrade all packages
         $selections = $upgradeTable | ForEach-Object { $true }
         $upgradeTable = $upgradeTable | Sort-Object -Property Name
-
-        Write-Output "Upgrading:"
-        $upgradeTable | ForEach-Object { Write-Output "- $($_.Name)" }
     }
     else
     {
@@ -664,10 +661,17 @@ function Update-WinGetSoftware
         Exit-AltScreenBuffer
     }
 
-    if (($upgradeTable.Count -gt 0) -and ($null -ne $selections))
-    {
+    Write-Output "Upgrades available: $($upgradeTable.Count)"
+    if ($null -eq $selections) {
+        $upgradeTable = @()
+    } else {
+        $upgradeTable = @($upgradeTable | Where-Object { $selections[$upgradeTable.indexOf($_)] })
+    }
+
+    Write-Output "Upgrades selected: $($upgradeTable.Count)"
+    if ($upgradeTable.Count -ne 0) {
         $upgradeIndex = 0
-        $upgradeTable = $upgradeTable | Where-Object { $selections[$upgradeTable.indexOf($_)] }
+        $upgradeTable | ForEach-Object { Write-Output "- $($_.Id) ($($_.Name))" }
 
         foreach ($upgradeItem in $upgradeTable)
         {
