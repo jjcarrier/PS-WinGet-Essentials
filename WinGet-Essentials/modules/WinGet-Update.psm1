@@ -172,21 +172,6 @@ function Update-WinGetEssentials
         [switch]$Force
     )
 
-    $showJobProgress = {
-        param (
-            [System.Management.Automation.Job]$Job
-        )
-
-        $progressIndicator = @('|','/','-','\')
-        $progressIter = 0
-        [Console]::CursorVisible = $false
-        while ($Job.JobStateInfo.State -eq "Running") {
-            $progressIter = ($progressIter + 1) % $progressIndicator.Count
-             Write-Host "$($progressIndicator[$progressIter])`b" -NoNewline
-            Start-Sleep -Milliseconds 125
-        }
-    }
-
     if ($Administrator -and -not(Test-Administrator)) {
         $boundParamsString = $PSBoundParameters.Keys | ForEach-Object {
             if ($PSBoundParameters[$_] -is [switch]) {
@@ -228,11 +213,11 @@ function Update-WinGetEssentials
 
     Write-Output 'Creating a checkpoint ...'
     $jobName = Start-Job -ScriptBlock { Checkpoint-WingetSoftware | Out-Null }
-    Invoke-Command $showJobProgress -ArgumentList $jobName
+    Show-JobProgress $jobName
 
     Write-Output 'Syncing upgrade packages ...'
     $jobName = Start-Job -ScriptBlock { Update-WinGetSoftware -Sync | Out-Null }
-    Invoke-Command $showJobProgress -ArgumentList $jobName
+    Show-JobProgress $jobName
     Write-Output 'Done.'
 }
 
@@ -587,13 +572,22 @@ function Update-WinGetSoftware
     }
 
     Write-Output "Getting winget upgrades ..."
+
+    $upgradeTable = @()
     if ($Sync) {
-        $commandArgs = @('source', 'update')
-        if (-not([string]::IsNullOrWhiteSpace($DefaultSource))) {
-            $commandArgs += @('--name', $DefaultSource)
+        $jobName = Start-Job -ScriptBlock {
+            $commandArgs = @('source', 'update')
+            if (-not([string]::IsNullOrWhiteSpace($DefaultSource))) {
+                $commandArgs += @('--name', $DefaultSource)
+            }
+            winget $commandArgs
+            Get-WinGetSoftwareUpgrade -UseIgnores -Detruncate
         }
-        winget $commandArgs
-        $upgradeTable = Get-WinGetSoftwareUpgrade -UseIgnores -Detruncate
+
+        Show-JobProgress $jobName
+        $cacheFile = $CacheFilePath.Replace('{HOSTNAME}', $(hostname).ToLower())
+        $upgradeTable = (Get-Content $cacheFile | ConvertFrom-Json).upgrades
+
         if ($upgradeTable.Count -gt 0) {
             Write-Output "`nAvailable Upgrades:"
             $upgradeTable | Format-Table
@@ -601,7 +595,13 @@ function Update-WinGetSoftware
         return
     }
     else {
-        $upgradeTable = Get-WinGetSoftwareUpgrade -UseIgnores -Detruncate
+        $jobName = Start-Job -ScriptBlock {
+            Get-WinGetSoftwareUpgrade -UseIgnores -Detruncate
+        }
+
+        Show-JobProgress $jobName
+        $cacheFile = $CacheFilePath.Replace('{HOSTNAME}', $(hostname).ToLower())
+        $upgradeTable = (Get-Content $cacheFile | ConvertFrom-Json).upgrades
     }
 
     if ($upgradeTable.Count -eq 0) {
