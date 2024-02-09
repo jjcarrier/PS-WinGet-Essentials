@@ -8,7 +8,7 @@ Set-StrictMode -Version 3
 #>
 function Test-Administrator
 {
-    $user = [Security.Principal.WindowsIdentity]::GetCurrent();
+    $user = [Security.Principal.WindowsIdentity]::GetCurrent()
     return (New-Object Security.Principal.WindowsPrincipal $user).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
 }
 
@@ -64,4 +64,46 @@ function Enter-AltScreenBuffer
 function Exit-AltScreenBuffer
 {
     $Host.UI.Write([char]27 + "[?1049l")
+}
+
+<#
+.DESCRIPTION
+    Start the display of busy indicator on supported terminals.
+#>
+function Start-TerminalBusy
+{
+    #https://learn.microsoft.com/en-us/windows/terminal/tutorials/progress-bar-sequences
+    $Host.UI.Write([char]27 + "]9;4;3;0" + [char]7)
+}
+
+<#
+.DESCRIPTION
+    Stop the display of busy indicator on supported terminals.
+#>
+function Stop-TerminalBusy
+{
+    $Host.UI.Write([char]27 + "]9;4;0;0" + [char]7)
+}
+
+<#
+.DESCRIPTION
+    Draws job progress indicators.
+#>
+function Show-JobProgress
+{
+    param(
+        [System.Management.Automation.Job]$Job
+    )
+
+    $progressIndicator = @('|', '/', '-', '\')
+    $progressIter = 0
+
+    Start-TerminalBusy
+    [Console]::CursorVisible = $false
+    while ($Job.JobStateInfo.State -eq "Running") {
+        $progressIter = ($progressIter + 1) % $progressIndicator.Count
+            Write-Host "$($progressIndicator[$progressIter])`b" -NoNewline
+        Start-Sleep -Milliseconds 125
+    }
+    Stop-TerminalBusy
 }
