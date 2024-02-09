@@ -4,6 +4,7 @@ Import-Module "$PSScriptRoot\WinGet-Utils.psm1"
 
 # Used for specifing the default choice when prompting the user.
 [int]$DefaultChoiceContinue = 0
+[int]$ChoiceElevate = 2
 
 [string]$DefaultSource = 'winget'
 [string]$CacheFilePath = "$PSScriptRoot/winget.{HOSTNAME}.cache"
@@ -339,12 +340,13 @@ function Update-WinGetSoftware
             return
         }
 
-        $abortIndex = 2
+        $abortIndex = 3
         $title = $null # not used
         $question = "What action should be performed?"
         $choices = @(
             [System.Management.Automation.Host.ChoiceDescription]::new("&Continue", "Continue installing other software (if available).")
             [System.Management.Automation.Host.ChoiceDescription]::new("&Retry", "Retry installation of the current software package.")
+            [System.Management.Automation.Host.ChoiceDescription]::new("&Elevate", "Retry installation of the current software package using elevated permissions.")
             [System.Management.Automation.Host.ChoiceDescription]::new("&Abort", "Stop and exit installation process.")
         )
 
@@ -442,6 +444,43 @@ function Update-WinGetSoftware
         return $commandArgs
     }
 
+    function Start-ProcessAsAdmin
+    {
+        param (
+            [Parameter(Mandatory=$true)]
+            [string]$FilePath,
+            [Parameter(Mandatory=$false)]
+            [string[]]$ArgumentList
+        )
+
+        $cmdArgs = @{
+            Verb = 'RunAs'
+            FilePath = $FilePath
+            ArgumentList = $ArgumentList
+        }
+
+        $process = Start-Process @cmdArgs
+
+        $startInfo = New-Object System.Diagnostics.ProcessStartInfo
+        $startInfo.FileName = $FilePath
+        $startInfo.Arguments = $ArgumentList -join ' '
+        $startInfo.RedirectStandardOutput = $true
+        $startInfo.RedirectStandardError = $true
+        $startInfo.UseShellExecute = $false
+        $startInfo.Verb = "RunAs"
+
+        $process = New-Object System.Diagnostics.Process
+        $process.StartInfo = $startInfo
+        $process.Start() | Out-Null
+
+        $stdout = $process.StandardOutput.ReadToEnd()
+        $stderr = $process.StandardError.ReadToEnd()
+
+        $process.WaitForExit()
+
+        return $process.ExitCode, $stdout, $stderr
+    }
+
     <#
     .DESCRIPTION
         Updates the specified package.
@@ -473,35 +512,61 @@ function Update-WinGetSoftware
         # From https://github.com/microsoft/winget-cli/blob/master/src/AppInstallerSharedLib/Public/AppInstallerErrors.h
         $UPDATE_NOT_APPLICABLE = 0x8A15002B
         $done = $false
+        $elevate = $false
 
         while (-not($done)) {
             Write-Verbose "Updating '$($Item.Id)' ..."
             $commandArgs = Get-WinGetSoftwareUpgradeArgs -Item $Item -Interactive:$Interactive
-            winget $commandArgs
 
-            $upgradeOk = $LASTEXITCODE -eq 0
-
-            if (-not($upgradeOk) -and ($LASTEXITCODE -eq $UPDATE_NOT_APPLICABLE)) {
-                # This is a best-effort workaround for an issue currently present in
-                # winget where the listing reports an update, but it is not possible
-                # to 'upgrade'. Instead, use the 'install' command. This is
-                # typically due to a different installer used for the current
-                # installation versus what is available on the winget source. In
-                # this case, try with --uninstall-previous, but support for this is
-                # not guaranteed. If this fails, the user likely needs to
-                # "winget uninstall" and then "winget install". This could
-                # potentially be handled here, but there may be issues with ensuring
-                # the install state is maintained. For now it is best to force the
-                # user to upgrade this package manually.
-                $commandArgs[0] = 'install'
-                $commandArgs += '--uninstall-previous'
-                Write-Verbose "command: winget $commandArgs"
+            if ($elevate -and -not(Test-Administrator)) {
+                Write-Output "Installing using an elevated shell ..."
+                $cmdArgs = "-NoLogo -Command winget $commandArgs"
+                $exitcode, $stdout, $stderr = Start-ProcessAsAdmin -FilePath 'pwsh' -ArgumentList $cmdArgs
+                $stdout
+                if ($exitcode -ne 0)
+                {
+                    Write-Error "An error was detected in the elevated session."
+                    $stderr
+                    $upgradeOk = $false
+                    $LASTEXITCODE = [int]($exitcode)
+                } else {
+                    $upgradeOk = $true
+                    $LASTEXITCODE = 0
+                }
+            } else {
                 winget $commandArgs
+                $upgradeOk = $LASTEXITCODE -eq 0
+
+                if (-not($upgradeOk) -and ($LASTEXITCODE -eq $UPDATE_NOT_APPLICABLE)) {
+                    # This is a best-effort workaround for an issue currently present in
+                    # winget where the listing reports an update, but it is not possible
+                    # to 'upgrade'. Instead, use the 'install' command. This is
+                    # typically due to a different installer used for the current
+                    # installation versus what is available on the winget source. In
+                    # this case, try with --uninstall-previous, but support for this is
+                    # not guaranteed. If this fails, the user likely needs to
+                    # "winget uninstall" and then "winget install". This could
+                    # potentially be handled here, but there may be issues with ensuring
+                    # the install state is maintained. For now it is best to force the
+                    # user to upgrade this package manually.
+                    $commandArgs[0] = 'install'
+                    $commandArgs += '--uninstall-previous'
+                    Write-Verbose "command: winget $commandArgs"
+
+                    if ($elevate -and -not(Test-Administrator)) {
+                        $cmdArgs = "-NoLogo -Command winget $commandArgs"
+                        Start-Process -Verb RunAs -FilePath 'pwsh' -ArgumentList $cmdArgs
+                        return
+                    } else {
+                        winget $commandArgs
+                    }
+                }
             }
 
             # TODO: Ignore exit code 3010 (seems to indicate "restart required")?
             if (Test-LastCommandResult -ErrorCount $ErrorCount -Force:$Force) {
                 $done = $true
+                $elevate = $false
                 Write-Verbose "Updated '$($Item.Id)'"
                 Write-Verbose "`tOld Version: [$($Item.Version)]"
                 Write-Verbose "`tNew Version: [$($Item.Available)]"
@@ -511,6 +576,7 @@ function Update-WinGetSoftware
                 $action = 0
                 Request-ContinueOnError -Code $LastExitCode -ErrorCount $ErrorCount.Value -Force:$Force -Action ([ref]$action) -CmdArgs @('winget', $commandArgs)
                 $done = $action -eq $DefaultChoiceContinue # The 'Abort' action is handled by Request-ContinueOnError
+                $elevate = $action -eq $ChoiceElevate
                 $Success.Value = $false
             }
         }
