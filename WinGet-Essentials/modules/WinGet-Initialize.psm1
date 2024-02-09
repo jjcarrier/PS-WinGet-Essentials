@@ -16,7 +16,7 @@ function Initialize-WinGetResource
         # The path to an existing file. This file will be symbolically linked.
         [string]$SourceFile,
 
-        # Points to one of the internally referernced resource files which
+        # Points to one of the internally referenced resource files which
         # the -SourceFile will be SymLink'd or copied to.
         [string]$DestinationFile
     )

@@ -29,7 +29,8 @@ function Get-ListHash
 
 <#
 .DESCRIPTION
-    Queries "winget upgrade".
+    Queries "winget upgrade", applies a filter according to ignore-file rule(s)
+    and resolve output truncation.
 .OUTPUTS
     An array of objects containing the available upgrades.
 #>
