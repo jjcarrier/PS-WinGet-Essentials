@@ -67,12 +67,9 @@ function Get-WinGetSoftwareUpgrade
 
     if (Test-Path $cacheFile)
     {
-        if ($CleanCache)
-        {
+        if ($CleanCache) {
             Remove-Item $cacheFile
-        }
-        else
-        {
+        } else {
             Write-Verbose "Getting upgrade cache ..."
             $cache = Get-Content $cacheFile | ConvertFrom-Json
 
@@ -174,8 +171,7 @@ function Update-WinGetEssentials
         [switch]$Force
     )
 
-    $showJobProgress =
-    {
+    $showJobProgress = {
         param (
             [System.Management.Automation.Job]$Job
         )
@@ -303,8 +299,7 @@ function Update-WinGetSoftware
 
         $result = $LASTEXITCODE -eq 0
 
-        if (-not($result))
-        {
+        if (-not($result)) {
             $ErrorCount.Value++
         }
 
@@ -359,8 +354,7 @@ function Update-WinGetSoftware
 
         $Action.Value = $Host.UI.PromptForChoice($title, $question, $choices, $DefaultChoiceContinue)
 
-        if ($Action.Value -eq $abortIndex)
-        {
+        if ($Action.Value -eq $abortIndex) {
             throw "Aborted (Errors = $ErrorCount)."
         }
 
@@ -563,8 +557,7 @@ function Update-WinGetSoftware
 
     $cacheFile = $CacheFilePath.Replace('{HOSTNAME}', $(hostname).ToLower())
 
-    if (-not([string]::IsNullOrWhiteSpace($Id)))
-    {
+    if (-not([string]::IsNullOrWhiteSpace($Id))) {
         $upgradeTable = @()
         $Id | ForEach-Object {
             $upgradeItem = Get-ItemFromCache -Id $_
@@ -593,16 +586,14 @@ function Update-WinGetSoftware
     }
 
     Write-Output "Getting winget upgrades ..."
-    if ($Sync)
-    {
+    if ($Sync) {
         $commandArgs = @('source', 'update')
         if (-not([string]::IsNullOrWhiteSpace($DefaultSource))) {
             $commandArgs += @('--name', $DefaultSource)
         }
         winget $commandArgs
         $upgradeTable = Get-WinGetSoftwareUpgrade -UseIgnores -Detruncate
-        if ($upgradeTable.Count -gt 0)
-        {
+        if ($upgradeTable.Count -gt 0) {
             Write-Output "`nAvailable Upgrades:"
             $upgradeTable | Format-Table
         }
@@ -612,20 +603,15 @@ function Update-WinGetSoftware
         $upgradeTable = Get-WinGetSoftwareUpgrade -UseIgnores -Detruncate
     }
 
-    if ($upgradeTable.Count -eq 0)
-    {
+    if ($upgradeTable.Count -eq 0) {
         Write-Output "No packages to be updated ..."
         $selections =@()
         # Do nothing
-    }
-    elseif ($All)
-    {
+    } elseif ($All) {
         # Upgrade all packages
         $selections = $upgradeTable | ForEach-Object { $true }
         $upgradeTable = $upgradeTable | Sort-Object -Property Name
-    }
-    else
-    {
+    } else {
         # Ask user to select packages to install
         $upgradeTable = $upgradeTable | Sort-Object -Property Name
         $selections = $upgradeTable | ForEach-Object { $false }
@@ -674,8 +660,7 @@ function Update-WinGetSoftware
         $upgradeIndex = 0
         $upgradeTable | ForEach-Object { Write-Output "- $($_.Id) ($($_.Name))" }
 
-        foreach ($upgradeItem in $upgradeTable)
-        {
+        foreach ($upgradeItem in $upgradeTable) {
             Write-ProgressHelper -UpgradeTable $upgradeTable -UpgradeIndex $upgradeIndex
 
             if (($upgradeItem.Version -eq 'Unknown') -and -not($UpgradeUnknown)) {
