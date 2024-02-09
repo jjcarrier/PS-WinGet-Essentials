@@ -134,6 +134,7 @@ function Resolve-WinGetSoftwareUpgrade
     process
     {
         if ($_.Name -like "*…" -or $_.Id -like "*…") {
+            Write-Verbose "Resolving $($_.Id) ($($_.Name)) ..."
             $commandArgs = @('search', '--id', "$($_.Id.Replace('…',''))")
             if (-not([string]::IsNullOrWhiteSpace($DefaultSource))) {
                 $commandArgs += @('--source', $DefaultSource)
