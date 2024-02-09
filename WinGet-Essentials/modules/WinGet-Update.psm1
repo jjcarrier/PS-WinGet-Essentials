@@ -50,10 +50,10 @@ function Get-WinGetSoftwareUpgrade
         $commandArgs += @('--source', $DefaultSource)
     }
 
-    # NOTE: for better caching, this logic should sanitize the response. In some
-    # cases winget will emit the progress bar which will prevent caching from
-    # working when it should.
+    # For better caching, strip any output before the header row of the upgrade table.
     $response = winget $commandArgs
+    $startIndex = ($response | Select-String "^Name " | Select-Object -First 1).LineNumber - 1
+    $response = $response[$startIndex .. ($response.Length - 1)]
     [console]::BufferWidth = $consoleWidth
     if ($NoIgnore) {
         $ignoredIds = @()
