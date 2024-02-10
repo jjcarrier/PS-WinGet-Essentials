@@ -94,7 +94,7 @@ function Get-WinGetSoftwareUpgrade
             $upgrades += $response[$splitIndex..($response.Count-1)] | ConvertFrom-TextTable -LastLineRegEx $lastLineRegex
         }
 
-        if ($UseIgnores) {
+        if (-not($NoIgnore)) {
             $upgrades = $upgrades | Where-Object {
                 if ($_.Id.EndsWith('…')) {
                     # Determine if it is necessary to resolve a truncated ID,
