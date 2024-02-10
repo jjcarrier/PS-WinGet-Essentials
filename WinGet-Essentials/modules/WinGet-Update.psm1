@@ -318,12 +318,15 @@ function Update-WinGetSoftware
         )
 
         Write-Output ""
+        $url = "https://github.com/microsoft/winget-cli/blob/master/doc/windows/package-manager/winget/returnCodes.md"
+        $label = "More Info"
         if ([string]::IsNullOrWhiteSpace($CmdDetails)) {
             Write-Warning "An error (code: $("0x{0:X08}" -f $Code)) occurred while executing the last step."
         } else {
             Write-Warning "An error (code: $("0x{0:X08}" -f $Code)) occurred while executing:"
             Write-Warning $CmdDetails
         }
+        Write-Warning "Additional details here: $(New-HyperLinkText -Url $url -Label $label)"
 
         if ($Force) {
             return

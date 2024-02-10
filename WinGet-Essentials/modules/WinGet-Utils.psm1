@@ -107,3 +107,17 @@ function Show-JobProgress
     }
     Stop-TerminalBusy
 }
+
+<#
+.DESCRIPTION
+    Creates a hyperlink text entry.
+#>
+function New-HyperLinkText
+{
+    param(
+        [string]$Url,
+        [string]$Label
+    )
+
+    "`e]8;;$Url`e\$Label`e]8;;`e\"
+}
