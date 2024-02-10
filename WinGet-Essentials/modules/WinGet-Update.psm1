@@ -37,8 +37,13 @@ function Get-ListHash
 function Get-WinGetSoftwareUpgrade
 {
     param (
+        # Detruncate any entries in the text-based results by performing additional queries.
         [switch]$Detruncate,
-        [switch]$UseIgnores,
+
+        # Use the ignore file to filter the available upgrades.
+        [switch]$NoIgnore,
+
+        # Clean the cache prior to fetching upgrades.
         [switch]$CleanCache
     )
 
