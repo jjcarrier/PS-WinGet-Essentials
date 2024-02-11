@@ -36,6 +36,7 @@ function Merge-WinGetRestore
         # Skip performing a checkpoint.
     } else {
         Checkpoint-WinGetSoftware
+        Start-Sleep -Milliseconds 500
     }
 
     $checkpointFile = $CheckpointFilePath.Replace('{HOSTNAME}', $(hostname).ToLower())
