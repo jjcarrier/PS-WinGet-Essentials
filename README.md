@@ -54,6 +54,9 @@ For first time users, the following steps are recommended for setting up
 the various resources needed by the cmdlets:
 
 1. Open an Administrator instance of PowerShell
+   * Note: This is only necessary if the user's `Local Security Policy` does not
+     include them in the `Create symbolic links` entry's `Security Setting`.
+     This may be modified under "Local Policies\User Rights Assignment\Create symbolic links".
 2. Change directory to a folder where you wish to store the physical copy of
    the resource files (i.e. the ignore and package list files).
 3. Run:
@@ -102,7 +105,7 @@ If desired, it is also possible to perform a more manual upgrade process using
 in the paragraphs that follow.
 
 ```pwsh
-Update-Module -Name WinGet-Essentials -Repository PSGallery
+Update-Module -Name WinGet-Essentials
 ```
 
 > [!NOTE]\
