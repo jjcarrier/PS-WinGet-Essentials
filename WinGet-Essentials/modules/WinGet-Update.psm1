@@ -705,7 +705,24 @@ $UpgradesScriptBlock = {
     if (Test-Path $cacheFile) {
         $upgrades = (Get-Content $cacheFile | ConvertFrom-Json).upgrades
         if ($null -ne $upgrades) {
-            $upgrades | Where-Object { $_.Id -like "$wordToComplete*" } | ForEach-Object {
+            $commandLine = $commandAst.Extent.Text | Select-String -Pattern "\s+\-$parameterName\s+"
+            if (($null -ne $commandLine) -and ($commandLine.Matches.Count -gt 0)) {
+                $commandLine = $commandAst.Extent.Text.Split(($commandLine.Matches | Select-Object -Last 1).Value) | Select-Object -Last 1
+            } else {
+                $commandLine = $commandAst.Extent.Text.Split(" ") | Select-Object -Skip 1
+            }
+
+            # Extract the values that have been entered so far
+            if ($null -ne $commandLine) {
+                $enteredUpgrades = $commandLine.Split(",") | ForEach-Object { $_.Trim('"').Trim("'") }
+            } else {
+                $enteredUpgrades = @()
+            }
+
+            # Filter out the values that have already been entered
+            $completionUpgrades = $upgrades | Where-Object { $_.Id -notin $enteredUpgrades }
+
+            $completionUpgrades | Where-Object { $_.Id -like "$wordToComplete*" } | ForEach-Object {
                 $toolTip = "$($_.Name) [$($_.Version) --> $($_.Available)]"
                 [System.Management.Automation.CompletionResult]::new($_.Id, $_.Id, 'ParameterValue', $toolTip)
             }
