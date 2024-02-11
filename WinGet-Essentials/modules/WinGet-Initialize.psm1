@@ -9,6 +9,11 @@ Import-Module "$PSScriptRoot\WinGet-Utils.psm1"
     This is the back end handler for initializing various user-facing files
     that typically are expected to resize external to the module install
     location but symlinked.
+
+.NOTES
+    Admin rights may or may not be necessary if the user's security policy has
+    been updated to permit creating symlinks. See "Local Security Policy":
+    "Local Policies\User Rights Assignment\Create symbolic links".
 #>
 function Initialize-WinGetResource
 {
@@ -29,7 +34,7 @@ function Initialize-WinGetResource
             Move-Item $DestinationFile -Destination "$DestinationFile.bak" -Force
         }
 
-        $SymLinkArgs = @{
+        $symLinkArgs = @{
             ItemType = "SymbolicLink"
             Path = "$(Split-Path -Parent $DestinationFile)"
             Name = $DestinationFilename
@@ -38,7 +43,11 @@ function Initialize-WinGetResource
         }
 
         Write-Output "Creating new symlink for '$DestinationFilename'."
-        New-Item @SymLinkArgs
+        try {
+            $null = New-Item @symLinkArgs
+        } catch {
+            Write-Output "An error occurred while creating a symbolic link ($($_.FullyQualifiedErrorId))."
+        }
     } elseif (Test-Path $DestinationFile) {
         Write-Output "The '$DestinationFilename' file is already initialized."
         return
@@ -67,20 +76,19 @@ function Initialize-WinGetResource
         if ($null -ne $selectedPackageFile) {
             $source = Get-Item $selectedPackageFile
             if ($source.Target) {
-                if (-not(Test-Administrator)) {
-                    Write-Warning "A symlink to '$DestinationFilename' cannot be created as a non-admin."
-                    return
-                }
-
                 Write-Output "Creating new symlink to '$DestinationFilename'."
-                $SymLinkArgs = @{
+                $symLinkArgs = @{
                     ItemType = "SymbolicLink"
                     Path = "$(Split-Path -Parent $DestinationFile)"
                     Name = $DestinationFilename
                     Value = $source.Target
                 }
 
-                New-Item @SymLinkArgs
+                try {
+                    $null = New-Item @symLinkArgs
+                } catch {
+                    Write-Output "An error occurred while creating a symbolic link ($($_.FullyQualifiedErrorId))."
+                }
             } else {
                 Write-Output "Copying existing '$DestinationFilename'."
                 Copy-Item -Path $source.FullName -Destination $DestinationFile

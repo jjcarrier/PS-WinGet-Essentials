@@ -192,8 +192,10 @@ function Update-WinGetEssentials
         return
     }
 
-    if (-not(Test-Administrator)) {
-        Write-Error 'This cmdlet must be run as an Administrator.'
+    if (-not(Test-CreateSymlink)) {
+        $label = 'Microsoft Article'
+        $url = 'https://learn.microsoft.com/en-us/windows/security/threat-protection/security-policy-settings/create-symbolic-links'
+        Write-Error "The current user does not have the required privileges to create symbolic links. See $(New-HyperLinkText -Label $label -Url $url)."
         return
     }
 

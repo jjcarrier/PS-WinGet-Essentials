@@ -148,3 +148,32 @@ function Wait-ConsoleKeyEnter
 {
     while ($Host.ui.RawUI.ReadKey('NoEcho,IncludeKeyDown').VirtualKeyCode -ne [ConsoleKey]::Enter) {}
 }
+
+<#
+.DESCRIPTION
+    Check permissions for creating symbolic links.
+#>
+function Test-CreateSymlink
+{
+    $success = $true
+    $symLinkArgs = @{
+        ItemType = "SymbolicLink"
+        Path = "$(Split-Path -Parent $PSScriptRoot)"
+        Name = "check.tmp"
+        Value = ""
+        Force = $true
+    }
+
+    try {
+        $tempFile = New-TemporaryFile
+        $symLinkArgs.Value = $tempFile.FullName
+        $symlinkFile = New-Item @symLinkArgs
+        Remove-Item -Path $symlinkFile
+    } catch {
+        $success = $true
+    } finally {
+        Remove-Item -Path $tempFile
+    }
+
+    return $success
+}
