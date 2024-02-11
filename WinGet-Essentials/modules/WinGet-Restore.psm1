@@ -112,10 +112,15 @@ function Restore-WinGetSoftware
     }
 
     if (-not(Test-Administrator) -and -not($Force)) {
-        Write-Warning ('Some programs will not install correctly if WinGet is used without administrator rights. ' +
-            'This is particularly true for zip-based installs which involve the creation of symbolic links to export the utility the WinGet "Links" path.')
-        Write-Output 'Press any key to continue ...'
-        $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+        $label = 'Microsoft Article'
+        $url = 'https://learn.microsoft.com/en-us/windows/security/threat-protection/security-policy-settings/create-symbolic-links'
+        Write-Warning ("Some programs will not install correctly if WinGet is used without administrator rights.`n" +
+                    "`t This is particularly true for zip-based installs which involve the creation of symbolic`n" +
+                    "`t links to export the utility the WinGet 'Links' path. Administrators may grant users`n" +
+                    "`t privileges to create symbolic links via local policies.`n" +
+                    "`t For more information see: " + (New-HyperLinkText -Label $label -Url $url))
+        Write-Output 'Press ENTER to continue ...'
+        Wait-ConsoleKeyEnter
     }
 
     if (-not(Test-Path variable:Confirm)) {
