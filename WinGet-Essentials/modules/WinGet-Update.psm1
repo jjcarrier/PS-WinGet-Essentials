@@ -634,12 +634,8 @@ function Update-WinGetSoftware
             Clear-Host
             winget $commandArgs
             Write-Output "`n[Press ENTER to return.]"
-            [Console]::CursorVisible = $false
-            $cursorPos = $Host.UI.RawUI.CursorPosition
-            while ($Host.ui.RawUI.ReadKey().VirtualKeyCode -ne [ConsoleKey]::Enter) {
-                $Host.UI.RawUI.CursorPosition = $cursorPos
-                [Console]::CursorVisible = $false
-            }
+            Hide-TerminalCursor
+            Wait-ConsoleKeyEnter
         }
 
         $TableUIArgs = @{
@@ -653,6 +649,7 @@ function Update-WinGetSoftware
         }
 
         Enter-AltScreenBuffer
+        Hide-TerminalCursor
         Show-TableUI @TableUIArgs
         Exit-AltScreenBuffer
     }
