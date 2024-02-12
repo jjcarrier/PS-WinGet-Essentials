@@ -68,6 +68,24 @@ function Exit-AltScreenBuffer
 
 <#
 .DESCRIPTION
+    Show the terminal cursor.
+#>
+function Show-TerminalCursor
+{
+    $Host.UI.Write([char]27 + "[?25h")
+}
+
+<#
+.DESCRIPTION
+    Hide the terminal cursor.
+#>
+function Hide-TerminalCursor
+{
+    $Host.UI.Write([char]27 + "[?25l")
+}
+
+<#
+.DESCRIPTION
     Start the display of busy indicator on supported terminals.
 #>
 function Start-TerminalBusy
@@ -99,7 +117,7 @@ function Show-JobProgress
     $progressIter = 0
 
     Start-TerminalBusy
-    [Console]::CursorVisible = $false
+    Hide-TerminalCursor
     while ($Job.JobStateInfo.State -eq "Running") {
         $progressIter = ($progressIter + 1) % $progressIndicator.Count
             Write-Host "$($progressIndicator[$progressIter])`b" -NoNewline
@@ -120,4 +138,13 @@ function New-HyperLinkText
     )
 
     "`e]8;;$Url`e\$Label`e]8;;`e\"
+}
+
+<#
+.DESCRIPTION
+    Waits for user to press the ENTER key.
+#>
+function Wait-ConsoleKeyEnter
+{
+    while ($Host.ui.RawUI.ReadKey('NoEcho,IncludeKeyDown').VirtualKeyCode -ne [ConsoleKey]::Enter) {}
 }
