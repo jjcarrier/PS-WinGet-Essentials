@@ -177,3 +177,176 @@ function Test-CreateSymlink
 
     return $success
 }
+
+<#
+.DESCRIPTION
+    Displays and services a simple pager UI.
+#>
+function Show-Paginated
+{
+    param (
+        [string]$Title,
+        [string[]]$TextData
+    )
+
+    <#
+    .DESCRIPTION
+        Writes the frame buffer to output.
+    #>
+    function Show-Frame
+    {
+        param(
+            [string[]]$FrameBuffer,
+            [int]$FrameWidth
+        )
+        $Host.UI.RawUI.CursorPosition = @{ X = 0; Y = 0 }
+        $FrameBuffer | ForEach-Object {
+            if ($_.Length -lt $FrameWidth) {
+                ($_ + (' ' * $FrameWidth - $_.Length))
+            } else {
+                $_
+            }
+        } | ForEach-Object {
+            Write-Host -NoNewline $_
+        }
+    }
+
+    <#
+    .DESCRIPTION
+        Prepares a line for output to the console. The line is constrained
+        to the specified width and will be truncated if it exceeds that length.
+    #>
+    function Format-LineForConsole
+    {
+        param(
+            [string]$Line,
+            [int]$FrameWidth
+        )
+        if ($Line.Length -gt $FrameWidth) {
+            # Truncate to fit width
+            $Line = "$($Line.Substring(0, $FrameWidth - 1))…"
+        } else {
+            # Pad the tail to fit $FrameWidth
+            $Line = $Line + (' ' * ($FrameWidth - $Line.Length))
+        }
+
+        return $Line
+    }
+
+    <#
+    .DESCRIPTION
+        Prepares an array of strings for pagination by pre-rendering the word
+        wrapped output according to the specified width.
+    #>
+    function Format-ContentForConsole
+    {
+        param (
+            [string[]]$Content,
+            [int]$FrameWidth
+        )
+
+        $halfFrameWidth = [Math]::Floor($FrameWidth / 2)
+        $newContent = @()
+
+        foreach ($line in $Content) {
+            $line = $line.TrimEnd()
+            if ($line.Length -gt $FrameWidth) {
+                while ($line.Length -gt $FrameWidth) {
+                    $splitIndex = $line.LastIndexOf(' ', $FrameWidth)
+
+                    if (($splitIndex -eq -1) -or ($splitIndex -lt $halfFrameWidth)) {
+                        $splitIndex = $FrameWidth
+                    }
+
+                    $newContent += $line.Substring(0, $splitIndex)
+                    $line = $line.Substring($splitIndex).TrimStart()
+                }
+            }
+
+            $newContent += $line
+        }
+
+        return $newContent
+    }
+
+    $currentIndex = 0
+    $reservedLines = 2 # Two lines removed for title and footer rows.
+    $lastWidth = 0
+    $header = ''
+    $content = ''
+    $footer = ''
+    $controls = 'Use ⇧/⇩ arrows to scroll, PAGE UP/PAGE DOWN to jump, Q to quit.'
+
+    while ($true) {
+        $pageSize = $Host.UI.RawUI.WindowSize.Height - $reservedLines
+        $width = $Host.UI.RawUI.WindowSize.Width
+
+        if ($width -ne $lastWidth) {
+            $header = Format-LineForConsole -Line $Title -FrameWidth $width
+            $content = Format-ContentForConsole -Content $TextData -FrameWidth $width
+            $footer = Format-LineForConsole -Line $controls -FrameWidth $width
+        }
+
+        # Add the title line to the frame buffer.
+        [string[]]$frameBuffer = @('')
+        $frameBuffer += "$($PSStyle.Foreground.Black)$($PSStyle.Background.BrightWhite)$header$($PSStyle.Reset)`n"
+
+        # Add the in-view content lines to the frame buffer.
+        # NOTE: Text must be formatted to account for word wrapping consuming additional lines.
+        $endIndex = [Math]::Min($currentIndex + $pageSize, $content.Length) - 1
+        $content[$currentIndex..$endIndex] | ForEach-Object { $frameBuffer += "$(Format-LineForConsole -Line $_ -FrameWidth $width)`n" }
+
+        # Add pad lines to the frame buffer.
+        $padLines = $pageSize - ($endIndex - $currentIndex) - 1
+        $padLine = "$(' ' * $width)`n"
+        for ($i = 0; $i -lt $padLines; $i++) { $frameBuffer += $padLine }
+
+        # Add footer line to the frame buffer.
+        $frameBuffer += "$($PSStyle.Foreground.Black)$($PSStyle.Background.BrightWhite)$footer$($PSStyle.Reset)"
+
+        Show-Frame -FrameBuffer $frameBuffer -Width $width
+        Hide-TerminalCursor
+
+        if (-not([Console]::KeyAvailable)) {
+            Start-Sleep -Milliseconds 10
+            continue
+        }
+
+        $key = [Console]::ReadKey($true)
+        $currentKey = [char]$key.Key
+        switch ($currentKey)
+        {
+            # Navigate up
+            { $_ -eq [ConsoleKey]::UpArrow } {
+                if ($currentIndex -gt 0) { $currentIndex-- }
+            }
+
+            # Navigate down
+            { $_ -eq [ConsoleKey]::DownArrow } {
+                if ($currentIndex -lt $content.Length - $reservedLines) { $currentIndex++ }
+            }
+
+            # Navigate up by one page
+            { $_ -eq [ConsoleKey]::PageUp } {
+                if ($currentIndex -gt $pageSize) {
+                    $currentIndex -= $pageSize
+                } else {
+                    $currentIndex = 0
+                }
+            }
+
+            # Navigate down by one page
+            { $_ -eq [ConsoleKey]::PageDown } {
+                if ($currentIndex + $pageSize -lt $content.Length) {
+                    $currentIndex += $pageSize
+                } else {
+                    $currentIndex = $content.Length - $reservedLines
+                }
+            }
+
+            { $currentKey -eq 'Q' } {
+                return
+            }
+        }
+    }
+}
