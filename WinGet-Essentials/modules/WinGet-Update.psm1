@@ -627,17 +627,22 @@ function Update-WinGetSoftware
         $upgradeTable = $upgradeTable | Sort-Object -Property Name
         $selections = $upgradeTable | ForEach-Object { $false }
 
-        $ShowPackageDetailsScriptBlock = {
+        $showPackageDetailsScriptBlock = {
             param($currentSelections, $selectedIndex)
             $commandArgs = @('show', $upgradeTable[$selectedIndex].Id)
             if (-not([string]::IsNullOrWhiteSpace($DefaultSource))) {
                 $commandArgs += @('--source', $DefaultSource)
             }
-            Clear-Host
-            winget $commandArgs
-            Write-Output "`n[Press ENTER to return.]"
-            Hide-TerminalCursor
-            Wait-ConsoleKeyEnter
+            $consoleEncoding = [console]::OutputEncoding
+            [console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
+            $details = winget $commandArgs --no-vt
+            [console]::OutputEncoding = $consoleEncoding
+            $firstLine = $details | Select-String -Pattern 'Found\s+(.*\[.*\])'
+            if ($firstLine.Matches.Count -eq 1) {
+                $details = $details[$firstLine.LineNumber..($details.Length - 1)]
+                Show-Paginated -TextData $details -Title $firstLine.Matches[0].Groups[1].Value
+                Hide-TerminalCursor
+            }
         }
 
         $TableUIArgs = @{
@@ -647,7 +652,7 @@ function Update-WinGetSoftware
             DefaultMemberToShow = @('Name','Available','Version')
             SelectedItemMembersToShow = @('Name','Id','Version','Available')
             EnterKeyDescription = 'Press ENTER to show selection details.'
-            EnterKeyScript = $ShowPackageDetailsScriptBlock
+            EnterKeyScript = $showPackageDetailsScriptBlock
         }
 
         Enter-AltScreenBuffer

@@ -77,24 +77,29 @@ function Merge-WinGetRestore
     if ($UseUI) {
         $selections = [bool[]]@()
 
-        $ShowPackageDetailsScriptBlock = {
+        $showPackageDetailsScriptBlock = {
             param($currentSelections, $selectedIndex)
             $commandArgs = @('show', $newPackages[$selectedIndex].PackageIdentifier)
             if (-not([string]::IsNullOrWhiteSpace($DefaultSource))) {
                 $commandArgs += @('--source', $DefaultSource)
             }
-            Clear-Host
-            winget $commandArgs
-            Write-Output "`n[Press ENTER to return.]"
-            Hide-TerminalCursor
-            Wait-ConsoleKeyEnter
+            $consoleEncoding = [console]::OutputEncoding
+            [console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
+            $details = winget $commandArgs --no-vt
+            [console]::OutputEncoding = $consoleEncoding
+            $firstLine = $details | Select-String -Pattern 'Found\s+(.*\[.*\])'
+            if ($firstLine.Matches.Count -eq 1) {
+                $details = $details[$firstLine.LineNumber..($details.Length - 1)]
+                Show-Paginated -TextData $details -Title $firstLine.Matches[0].Groups[1].Value
+                Hide-TerminalCursor
+            }
         }
 
         $TableUIArgs = @{
             Table = $newPackages
             Title = 'Select Software to Merge'
             EnterKeyDescription = "Press ENTER to show selection details.                      "
-            EnterKeyScript = $ShowPackageDetailsScriptBlock
+            EnterKeyScript = $showPackageDetailsScriptBlock
             DefaultMemberToShow = "PackageIdentifier"
             SelectedItemMembersToShow = @("PackageIdentifier")
             Selections = ([ref]$selections)

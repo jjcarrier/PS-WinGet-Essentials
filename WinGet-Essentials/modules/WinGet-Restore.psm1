@@ -241,34 +241,45 @@ function Restore-WinGetSoftware
     if ($UseUI) {
         $selections = [bool[]]@()
 
-        $ShowPackageDetailsScriptBlock = {
+        $showPackageDetailsScriptBlock = {
             param($currentSelections, $selectedIndex)
             $fakePackage = $installPackages[$selectedIndex].PackageIdentifier -match $FakePackageExpression
             $hasPostInstall = $installPackages[$selectedIndex].PSobject.Properties.Name -contains "PostInstall"
-            Clear-Host
             if ($fakePackage) {
-                Write-Output "The selected package is not part of winget and only executes post-install comamnds."
+                $title = $installPackages[$selectedIndex].PackageIdentifier
+                $details = @("The selected package is not part of winget and only executes post-install comamnds.")
             } else {
                 $commandArgs = @('show', $installPackages[$selectedIndex].PackageIdentifier)
                 if (-not([string]::IsNullOrWhiteSpace($DefaultSource))) {
                     $commandArgs += @('--source', $DefaultSource)
                 }
-                winget $commandArgs
+                $consoleEncoding = [console]::OutputEncoding
+                [console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
+                $details = @('')
+                $details += winget $commandArgs --no-vt
+                [console]::OutputEncoding = $consoleEncoding
+                $fistLine = $details | Select-String -Pattern 'Found\s+(.*\[.*\])'
+                $found = (($null -ne $fistLine) -and ($fistLine.Matches.Count -eq 1))
+                if ($found) {
+                    $title = $fistLine.Matches[0].Groups[1].Value
+                    $details = $details[$fistLine.LineNumber..($details.Length - 1)]
+                } else {
+                    $title =$installPackages[$selectedIndex].PackageIdentifier
+                }
             }
             if ($hasPostInstall) {
-                Write-Output "`nPost-Install Commands:"
-                $installPackages[$selectedIndex].PostInstall.Commands | ForEach-Object { Write-Output "`t$_" }
+                $details += "`nPost-Install Commands:"
+                $installPackages[$selectedIndex].PostInstall.Commands | ForEach-Object { $details += "`t$_" }
             }
-            Write-Output "`n[Press ENTER to return.]"
+            Show-Paginated -TextData $details -Title $title
             Hide-TerminalCursor
-            Wait-ConsoleKeyEnter
         }
 
         $TableUIArgs = @{
             Table = $installPackages
             Title = 'Select Software to Install'
             EnterKeyDescription = "Press ENTER to show selection details."
-            EnterKeyScript = $ShowPackageDetailsScriptBlock
+            EnterKeyScript = $showPackageDetailsScriptBlock
             DefaultMemberToShow = "PackageIdentifier"
             SelectedItemMembersToShow = @("PackageIdentifier", "Tags", "Version", "Location", "Interactive")
             Selections = ([ref]$selections)
