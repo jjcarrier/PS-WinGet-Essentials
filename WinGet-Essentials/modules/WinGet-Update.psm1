@@ -543,7 +543,7 @@ function Update-WinGetSoftware
                     "-$($_)"
                 }
             } else {
-                "-$($_) $($PSBoundParameters[$_])"
+                "-$($_) $($PSBoundParameters[$_] -join ',')"
             }
         }
         $cmdArgs = "-NoLogo -NoExit -Command Update-WingetSoftware $($boundParamsString -join ' ')"
