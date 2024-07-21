@@ -207,7 +207,7 @@ function Update-WinGetEssentials
     $newest = @(Get-Module WinGet-Essentials -ListAvailable)[0]
     Write-Output "- Updated Version: $($newest.Version)"
     Import-Module WinGet-Essentials -RequiredVersion $newest.Version
-    Import-Module "$PSScriptRoot/WinGet-Utils.psm1"
+    Import-Module (Join-Path -Path (Split-Path $newest.Path -Parent) -ChildPath "modules/WinGet-Utils.psm1")
 
     if (-not($Force) -and ($current.Version -eq $newest.Version)) {
         Write-Output "No new version detected."
