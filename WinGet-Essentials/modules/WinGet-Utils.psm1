@@ -116,14 +116,19 @@ function Show-JobProgress
     $progressIndicator = @('|', '/', '-', '\')
     $progressIter = 0
 
-    Start-TerminalBusy
-    Hide-TerminalCursor
-    while ($Job.JobStateInfo.State -eq "Running") {
-        $progressIter = ($progressIter + 1) % $progressIndicator.Count
-            Write-Host "$($progressIndicator[$progressIter])`b" -NoNewline
-        Start-Sleep -Milliseconds 125
+    try {
+        Start-TerminalBusy
+        Hide-TerminalCursor
+        while ($Job.JobStateInfo.State -eq "Running") {
+            $progressIter = ($progressIter + 1) % $progressIndicator.Count
+                Write-Host "$($progressIndicator[$progressIter])`b" -NoNewline
+            Start-Sleep -Milliseconds 125
+        }
     }
-    Stop-TerminalBusy
+    finally {
+        Write-Host " `b" -NoNewline
+        Stop-TerminalBusy
+    }
 }
 
 <#
