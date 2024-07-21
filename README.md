@@ -1,6 +1,8 @@
 # WinGet-Essentials PowerShell Module
 
-![PSGallery](https://img.shields.io/powershellgallery/p/WinGet-Essentials)
+[![pwsh version](https://img.shields.io/powershellgallery/v/WinGet-Essentials)](https://www.powershellgallery.com/packages/WinGet-Essentials)
+[![pwsh platform](https://img.shields.io/powershellgallery/p/WinGet-Essentials)](https://www.powershellgallery.com/packages/WinGet-Essentials)
+[![pwsh downloads](https://img.shields.io/powershellgallery/dt/WinGet-Essentials)](https://www.powershellgallery.com/packages/WinGet-Essentials)
 [![CI](https://github.com/jjcarrier/WinGet-Essentials/actions/workflows/ci.yml/badge.svg)](https://github.com/jjcarrier/WinGet-Essentials/actions/workflows/ci.yml)
 
 ## [Table of Contents](#table-of-contents)
@@ -97,6 +99,10 @@ module, in an Administrator instance of PowerShell, run:
 ```pwsh
 Update-WinGetEssentials
 ```
+
+> [!NOTE]\
+> Module versions >= 1.11.0 do not require this command to run in an Admin
+> instance, so long as the user has permissions to create SymLinks.
 
 ### Alternative update method (for module versions < 1.6.1)
 
