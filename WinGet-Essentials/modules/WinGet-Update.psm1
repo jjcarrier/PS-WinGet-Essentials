@@ -274,7 +274,10 @@ function Update-WinGetSoftware
         # Bypasses prompts. If a prior upgrade fails, the process will continue
         # to the next. NOTE: This overrides -WhatIf and -Confirm; however, it
         # does not disable the -Interactive switch.
-        [switch]$Force
+        [switch]$Force,
+
+        # Skips syncing latest upgrade info. Ignored if -Sync is specified.
+        [switch]$NoSync
     )
 
     <#
@@ -585,6 +588,8 @@ function Update-WinGetSoftware
     Write-Output "Getting winget upgrades ..."
 
     $upgradeTable = @()
+    $cacheFile = $CacheFilePath.Replace('{HOSTNAME}', $(hostname).ToLower())
+
     if ($Sync) {
         $jobName = Start-Job -ScriptBlock {
             $commandArgs = @('source', 'update')
@@ -596,22 +601,26 @@ function Update-WinGetSoftware
         }
 
         Show-JobProgress $jobName
-        $cacheFile = $CacheFilePath.Replace('{HOSTNAME}', $(hostname).ToLower())
         $upgradeTable = (Get-Content $cacheFile | ConvertFrom-Json).upgrades
 
         if ($upgradeTable.Count -gt 0) {
-            Write-Output "`nAvailable Upgrades:"
+            Write-Output "Available Upgrades:"
             $upgradeTable | Format-Table
         }
         return
     }
-    else {
+
+    if ($NoSync) {
+        Write-Output "Sync Skipped."
+    } else {
         $jobName = Start-Job -ScriptBlock {
             Get-WinGetSoftwareUpgrade -UseIgnores -Detruncate
         }
 
         Show-JobProgress $jobName
-        $cacheFile = $CacheFilePath.Replace('{HOSTNAME}', $(hostname).ToLower())
+    }
+
+    if (Test-Path $cacheFile) {
         $upgradeTable = (Get-Content $cacheFile | ConvertFrom-Json).upgrades
     }
 
