@@ -74,6 +74,7 @@ function Get-WinGetSoftwareUpgrade
     if (Test-Path $cacheFile)
     {
         if ($CleanCache) {
+            Write-Verbose "Cache cleaned ..."
             Remove-Item $cacheFile
         } else {
             Write-Verbose "Getting upgrade cache ..."
@@ -115,6 +116,8 @@ function Get-WinGetSoftwareUpgrade
                 -not($ignoredIds -contains $_.Id)
             }
         }
+
+        Write-Verbose "Found $($upgrades.Count) upgrades ..."
     }
 
     if ($Detruncate) {
@@ -125,7 +128,9 @@ function Get-WinGetSoftwareUpgrade
         hash = $cacheHash
         upgrades = $upgrades
     }
-    $cache | ConvertTo-Json | Set-Content $cacheFile
+
+    Write-Verbose "Updating: $cacheFile ..."
+    $cache | ConvertTo-Json | Set-Content $cacheFile -Force
 
     $upgrades
 }
