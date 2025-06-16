@@ -598,7 +598,7 @@ function Update-WinGetSoftware
                 $commandArgs += @('--name', $DefaultSource)
             }
             winget $commandArgs
-            Get-WinGetSoftwareUpgrade -UseIgnores -Detruncate
+            Get-WinGetSoftwareUpgrade -NoIgnore:$($using:NoIgnore) -CleanCache:$($using:CleanCache) -Verbose:$Verbose -Detruncate
         }
 
         Show-JobProgress $jobName
@@ -615,7 +615,7 @@ function Update-WinGetSoftware
         Write-Output "Sync Skipped."
     } else {
         $jobName = Start-Job -ScriptBlock {
-            Get-WinGetSoftwareUpgrade -UseIgnores -Detruncate
+            Get-WinGetSoftwareUpgrade -NoIgnore:$($using:NoIgnore) -CleanCache:$($using:CleanCache) -Verbose:$Verbose -Detruncate
         }
 
         Show-JobProgress $jobName
