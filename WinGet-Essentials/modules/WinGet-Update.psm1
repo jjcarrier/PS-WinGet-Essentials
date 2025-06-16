@@ -2,7 +2,7 @@
 Set-StrictMode -Version 3
 Import-Module "$PSScriptRoot\WinGet-Utils.psm1"
 
-# Used for specifing the default choice when prompting the user.
+# Used for specifying the default choice when prompting the user.
 [int]$DefaultChoiceContinue = 0
 
 [string]$DefaultSource = 'winget'
@@ -161,7 +161,7 @@ function Resolve-WinGetSoftwareUpgrade
     Attempts to upgrade to the latest version of WinGet-Essentials via the
     PSGallery. The various configuration files required by the WinGet-Essentials
     cmdlets will be migrated/moved from prior installations, or an error output
-    will be emitted stating that such a resouce is missing and is needed to
+    will be emitted stating that such a resource is missing and is needed to
     function.
 #>
 function Update-WinGetEssentials
@@ -169,7 +169,7 @@ function Update-WinGetEssentials
     param(
         <#
         When set, the cmdlet will automatically relaunch using an Administrator
-        PowerShell instance. This cmdlet requires aministrator privileges
+        PowerShell instance. This cmdlet requires administrator privileges
         to create Symbolic Links.
         #>
         [switch]$Administrator,
@@ -266,7 +266,7 @@ function Update-WinGetSoftware
         # Clean the cache
         [switch]$CleanCache,
 
-        # Indicates to run the command in an Administror PowerShell instance.
+        # Indicates to run the command in an Administrator PowerShell instance.
         [switch]$Administrator,
 
         # Bypasses the ignore file.
