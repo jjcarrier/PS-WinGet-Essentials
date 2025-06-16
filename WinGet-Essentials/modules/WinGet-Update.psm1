@@ -36,6 +36,7 @@ function Get-ListHash
 #>
 function Get-WinGetSoftwareUpgrade
 {
+    [CmdletBinding()]
     param (
         # Detruncate any entries in the text-based results by performing additional queries.
         [switch]$Detruncate,
